@@ -10,12 +10,14 @@ import (
 	"gopkg.in/olivere/elastic.v5"
 )
 
+// Query represents a boolean query (which can also act as a clause within a query)
 type Query struct {
 	All  []*Clause `json:"all,omitempty"`
 	Any  []*Clause `json:"any,omitempty"`
 	None []*Clause `json:"none,omitempty"`
 }
 
+// Clause represents a particular clause (including, potentially, a Query)
 type Clause struct {
 	Type string                 `json:"type,omitempty"`
 	Args map[string]interface{} `json:"args,omitempty"`
