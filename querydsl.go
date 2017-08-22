@@ -33,6 +33,14 @@ func (c *Clause) ToQuery() (elastic.Query, error) {
 	return elastic.NewTermQuery("user", "olivere"), nil
 }
 
+// launchClauseTranslators launches a set of goroutines to translate a set of Clauses
+// internally, it uses a WaitGroup to track when all of the goroutines it
+// launched are finished, and once they are signals to the WaitGroup passed as
+// an argument; this way if several calls to this function all pass the same
+// WaitGroup, that WaitGroup only shows up finished when every clause across
+// all of the several calls is processed
+//
+// This long comment brought to you by the author not wanting to forget how this works
 func launchClauseTranslators(clauses []*Clause, waitgroup *sync.WaitGroup, resultsChan chan elastic.Query, errChan chan error) {
 	var innerwg sync.WaitGroup
 
