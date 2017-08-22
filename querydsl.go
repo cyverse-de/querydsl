@@ -5,8 +5,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"gopkg.in/olivere/elastic.v5"
 	"sync"
+
+	"gopkg.in/olivere/elastic.v5"
 )
 
 type Query struct {
@@ -30,19 +31,37 @@ func (c *Clause) ToQuery() (elastic.Query, error) {
 	return elastic.NewTermQuery("user", "olivere"), nil
 }
 
+func launchClauseTranslators(clauses []*Clause, waitgroup *sync.WaitGroup, resultsChan chan elastic.Query, errChan chan error) {
+	var innerwg sync.WaitGroup
+
+	waitgroup.Add(1)
+
+	for _, clause := range clauses {
+		innerwg.Add(1)
+		go func(clause *Clause, wg *sync.WaitGroup) {
+			defer wg.Done()
+			query, err := clause.ToQuery()
+			if err != nil {
+				errChan <- err
+			} else {
+				resultsChan <- query
+			}
+		}(clause, &innerwg)
+	}
+
+	go func(subpartswg *sync.WaitGroup, innerwg *sync.WaitGroup) {
+		innerwg.Wait()
+		subpartswg.Done()
+	}(waitgroup, &innerwg)
+}
+
 // Translate turns a Query into an elastic.Query by way of translating everything contained within
 func (q *Query) Translate() (elastic.Query, error) {
 	baseQuery := elastic.NewBoolQuery()
 
-	// allwg, anywg, and nonewg track whether everything within each of the three respective lists has been processed
-	// their associated channels send processed queries back
-	var allwg sync.WaitGroup
+	// Result channels
 	allChan := make(chan elastic.Query, 10)
-
-	var anywg sync.WaitGroup
 	anyChan := make(chan elastic.Query, 10)
-
-	var nonewg sync.WaitGroup
 	noneChan := make(chan elastic.Query, 10)
 
 	// subpartswg tracks whether all three of the other waitgroups have completed
@@ -51,60 +70,11 @@ func (q *Query) Translate() (elastic.Query, error) {
 	// errChan is used by everything to propagate errors
 	errChan := make(chan error)
 
-	for _, clause := range q.All {
-		allwg.Add(1)
-		go func(clause *Clause) {
-			defer allwg.Done()
-			query, err := clause.ToQuery()
-			if err != nil {
-				errChan <- err
-			} else {
-				allChan <- query
-			}
-		}(clause)
-	}
+	launchClauseTranslators(q.All, &subpartswg, allChan, errChan)
+	launchClauseTranslators(q.Any, &subpartswg, anyChan, errChan)
+	launchClauseTranslators(q.None, &subpartswg, noneChan, errChan)
 
-	for _, clause := range q.Any {
-		anywg.Add(1)
-		go func(clause *Clause) {
-			defer anywg.Done()
-			query, err := clause.ToQuery()
-			if err != nil {
-				errChan <- err
-			} else {
-				anyChan <- query
-			}
-		}(clause)
-	}
-
-	for _, clause := range q.None {
-		nonewg.Add(1)
-		go func(clause *Clause) {
-			defer nonewg.Done()
-			query, err := clause.ToQuery()
-			if err != nil {
-				errChan <- err
-			} else {
-				noneChan <- query
-			}
-		}(clause)
-	}
-
-	subpartswg.Add(3)
-
-	go func() {
-		allwg.Wait()
-		subpartswg.Done()
-	}()
-	go func() {
-		anywg.Wait()
-		subpartswg.Done()
-	}()
-	go func() {
-		nonewg.Wait()
-		subpartswg.Done()
-	}()
-
+	// wait for all translators to be done, then send a nil error to signal completion
 	go func() {
 		subpartswg.Wait()
 		errChan <- nil
@@ -149,9 +119,9 @@ func main() {
 		fmt.Println("Error:", err)
 	}
 	fmt.Printf("%s\n", querySource)
-	translatedJson, err := json.Marshal(querySource)
+	translatedJSON, err := json.Marshal(querySource)
 	if err != nil {
 		fmt.Println("Error:", err)
 	}
-	fmt.Printf("%s\n", translatedJson)
+	fmt.Printf("%s\n", translatedJSON)
 }
