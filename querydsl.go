@@ -12,29 +12,50 @@ import (
 
 // Query represents a boolean query (which can also act as a clause within a query)
 type Query struct {
-	All  []*Clause `json:"all,omitempty"`
-	Any  []*Clause `json:"any,omitempty"`
-	None []*Clause `json:"none,omitempty"`
+	All  []*GenericClause `json:"all,omitempty"`
+	Any  []*GenericClause `json:"any,omitempty"`
+	None []*GenericClause `json:"none,omitempty"`
 }
 
 // Clause represents a particular clause (including, potentially, a Query)
 type Clause struct {
 	Type string                 `json:"type,omitempty"`
 	Args map[string]interface{} `json:"args,omitempty"`
-	Query
+}
+
+type GenericClause struct {
+	*Clause
+	*Query
+}
+
+func (c *GenericClause) IsQuery() bool {
+	return c.Query != nil && (len(c.All) > 0 || len(c.Any) > 0 || len(c.None) > 0)
+}
+
+func (c *GenericClause) IsClause() bool {
+	return c.Clause != nil && len(c.Type) > 0
 }
 
 type Translatable interface {
 	Translate() (elastic.Query, error)
 }
 
-// ToQuery turns a Clause into an elastic.Query
-func (c *Clause) Translate() (elastic.Query, error) {
-	if len(c.All) > 0 || len(c.Any) > 0 || len(c.None) > 0 {
+// Translate turns a GenericClause into an elastic.Query
+func (c *GenericClause) Translate() (elastic.Query, error) {
+	if c.IsQuery() {
 		// Looks like it's another nested query.
-		q := Query{All: c.All, Any: c.Any, None: c.None}
-		return q.Translate()
+		query := Query{All: c.All, Any: c.Any, None: c.None}
+		return query.Translate()
+	} else if c.IsClause() {
+		clause := Clause{Type: c.Type, Args: c.Args}
+		return clause.Translate()
+	} else {
+		return nil, fmt.Errorf("GenericClause %+v is neither a properly-formatted Query nor a Clause", c)
 	}
+}
+
+// Translate turns a regular Clause into an elastic.Query
+func (c *Clause) Translate() (elastic.Query, error) {
 	return elastic.NewTermQuery("user", "olivere"), nil
 }
 
@@ -46,14 +67,14 @@ func (c *Clause) Translate() (elastic.Query, error) {
 // all of the several calls is processed
 //
 // This long comment brought to you by the author not wanting to forget how this works
-func launchClauseTranslators(clauses []*Clause, waitgroup *sync.WaitGroup, resultsChan chan elastic.Query, errChan chan error) {
+func launchClauseTranslators(clauses []*GenericClause, waitgroup *sync.WaitGroup, resultsChan chan elastic.Query, errChan chan error) {
 	var innerwg sync.WaitGroup
 
 	waitgroup.Add(1)
 
 	for _, clause := range clauses {
 		innerwg.Add(1)
-		go func(clause *Clause, wg *sync.WaitGroup) {
+		go func(clause *GenericClause, wg *sync.WaitGroup) {
 			defer wg.Done()
 			query, err := clause.Translate()
 			if err != nil {
