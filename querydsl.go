@@ -24,11 +24,16 @@ type Clause struct {
 	Query
 }
 
+type Translatable interface {
+	Translate() (elastic.Query, error)
+}
+
 // ToQuery turns a Clause into an elastic.Query
-func (c *Clause) ToQuery() (elastic.Query, error) {
+func (c *Clause) Translate() (elastic.Query, error) {
 	if len(c.All) > 0 || len(c.Any) > 0 || len(c.None) > 0 {
-		// Looks like it's another nested query. Use the Translate method, then.
-		return c.Translate()
+		// Looks like it's another nested query.
+		q := Query{All: c.All, Any: c.Any, None: c.None}
+		return q.Translate()
 	}
 	return elastic.NewTermQuery("user", "olivere"), nil
 }
@@ -50,7 +55,7 @@ func launchClauseTranslators(clauses []*Clause, waitgroup *sync.WaitGroup, resul
 		innerwg.Add(1)
 		go func(clause *Clause, wg *sync.WaitGroup) {
 			defer wg.Done()
-			query, err := clause.ToQuery()
+			query, err := clause.Translate()
 			if err != nil {
 				errChan <- err
 			} else {
