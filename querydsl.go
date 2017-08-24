@@ -1,9 +1,7 @@
 // Package querydsl provides programmatic mapping from the CyVerse search DSL to Elasticsearch queries
-//package querydsl
-package main
+package querydsl
 
 import (
-	"encoding/json"
 	"fmt"
 	"sync"
 
@@ -147,40 +145,4 @@ func (q *Query) Translate() (elastic.Query, error) {
 			return baseQuery, nil
 		}
 	}
-}
-
-func main() {
-	AddClauseType("foo", func(args map[string]interface{}) (elastic.Query, error) {
-		return elastic.NewTermQuery("user", "olivere"), nil
-	})
-	var jsonBlob = []byte(`{
-		"all": [{"type": "foo", "args": {}}],
-		"any": [{"all": [], "any": [{"type": "foo", "args": {}}], "none": []}],
-		"none": []
-	}`)
-	var query Query
-	err := json.Unmarshal(jsonBlob, &query)
-	if err != nil {
-		fmt.Println("Error:", err)
-		return
-	}
-	fmt.Printf("%+v\n", query)
-	translated, err := query.Translate()
-	if err != nil {
-		fmt.Println("Error:", err)
-		return
-	}
-	fmt.Printf("%s\n", translated)
-	querySource, err := translated.Source()
-	if err != nil {
-		fmt.Println("Error:", err)
-		return
-	}
-	fmt.Printf("%s\n", querySource)
-	translatedJSON, err := json.Marshal(querySource)
-	if err != nil {
-		fmt.Println("Error:", err)
-		return
-	}
-	fmt.Printf("%s\n", translatedJSON)
 }
