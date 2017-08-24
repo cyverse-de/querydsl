@@ -10,28 +10,32 @@ import (
 	"gopkg.in/olivere/elastic.v5"
 )
 
-// Query represents a boolean query (which can also act as a clause within a query)
+// Query represents a boolean query
 type Query struct {
 	All  []*GenericClause `json:"all,omitempty"`
 	Any  []*GenericClause `json:"any,omitempty"`
 	None []*GenericClause `json:"none,omitempty"`
 }
 
-// Clause represents a particular clause (including, potentially, a Query)
+// Clause represents a particular clause
 type Clause struct {
 	Type string                 `json:"type,omitempty"`
 	Args map[string]interface{} `json:"args,omitempty"`
 }
 
+// GenericClause embeds both Query and Clause to represent the fact a clause
+// can be a nested query.
 type GenericClause struct {
 	*Clause
 	*Query
 }
 
+// IsQuery checks if a GenericClause has a valid Query part
 func (c *GenericClause) IsQuery() bool {
 	return c.Query != nil && (len(c.All) > 0 || len(c.Any) > 0 || len(c.None) > 0)
 }
 
+// IsClause checks if a GenericClause has a valid Clause part
 func (c *GenericClause) IsClause() bool {
 	return c.Clause != nil && len(c.Type) > 0
 }
