@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/cyverse-de/querydsl/clause"
 	"gopkg.in/olivere/elastic.v5"
 )
 
@@ -19,7 +20,7 @@ type Query struct {
 
 // Clause represents a particular clause
 type Clause struct {
-	Type string                 `json:"type,omitempty"`
+	Type clause.ClauseType      `json:"type,omitempty"`
 	Args map[string]interface{} `json:"args,omitempty"`
 }
 
@@ -58,9 +59,20 @@ func (c *GenericClause) Translate() (elastic.Query, error) {
 	}
 }
 
+var (
+	clauseProcessors = make(map[clause.ClauseType]clause.ClauseProcessor)
+)
+
+func AddClauseType(clausetype clause.ClauseType, processor clause.ClauseProcessor) {
+	clauseProcessors[clausetype] = processor
+}
+
 // Translate turns a regular Clause into an elastic.Query
 func (c *Clause) Translate() (elastic.Query, error) {
-	return elastic.NewTermQuery("user", "olivere"), nil
+	if processor, exists := clauseProcessors[c.Type]; exists {
+		return processor(c.Args)
+	}
+	return nil, fmt.Errorf("No processor found for type '%s'", c.Type)
 }
 
 // launchClauseTranslators launches a set of goroutines to translate a set of Clauses
@@ -138,6 +150,9 @@ func (q *Query) Translate() (elastic.Query, error) {
 }
 
 func main() {
+	AddClauseType("foo", func(args map[string]interface{}) (elastic.Query, error) {
+		return elastic.NewTermQuery("user", "olivere"), nil
+	})
 	var jsonBlob = []byte(`{
 		"all": [{"type": "foo", "args": {}}],
 		"any": [{"all": [], "any": [{"type": "foo", "args": {}}], "none": []}],
@@ -147,21 +162,25 @@ func main() {
 	err := json.Unmarshal(jsonBlob, &query)
 	if err != nil {
 		fmt.Println("Error:", err)
+		return
 	}
 	fmt.Printf("%+v\n", query)
 	translated, err := query.Translate()
 	if err != nil {
 		fmt.Println("Error:", err)
+		return
 	}
 	fmt.Printf("%s\n", translated)
 	querySource, err := translated.Source()
 	if err != nil {
 		fmt.Println("Error:", err)
+		return
 	}
 	fmt.Printf("%s\n", querySource)
 	translatedJSON, err := json.Marshal(querySource)
 	if err != nil {
 		fmt.Println("Error:", err)
+		return
 	}
 	fmt.Printf("%s\n", translatedJSON)
 }
