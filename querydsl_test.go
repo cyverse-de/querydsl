@@ -42,8 +42,17 @@ func addTestingClauseType() Clause {
 	return Clause{Type: "foo"}
 }
 
+func TestTranslateClauseNoTypes(t *testing.T) {
+	t.Parallel()
+	clause := Clause{Type: "type-that-doesnt-exist"}
+
+	_, err := clause.Translate()
+	if err == nil {
+		t.Errorf("Translate did not return error using nonexistent clause type, which it should")
+	}
+}
+
 func TestTranslateClause(t *testing.T) {
-	// TODO: test error conditions (no clause types, unsupported clause, etc.)
 	clause := addTestingClauseType()
 
 	translated, err := clause.Translate()
@@ -66,6 +75,17 @@ func TestTranslateClause(t *testing.T) {
 	}
 	if userValue.(string) != "arbitrary" {
 		t.Errorf("term user query was %q rather than %q", userValue, "arbitrary")
+	}
+}
+
+func TestTranslateQueryNoTypes(t *testing.T) {
+	t.Parallel()
+	clause := Clause{Type: "type-that-doesnt-exist"}
+	query := Query{All: []*GenericClause{&GenericClause{Clause: &clause}}}
+
+	_, err := query.Translate()
+	if err == nil {
+		t.Errorf("Translate did not return error using nonexistent clause type, which it should")
 	}
 }
 
