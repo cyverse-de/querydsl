@@ -28,5 +28,5 @@ func LabelProcessor(args map[string]interface{}) (elastic.Query, error) {
 }
 
 func Register() {
-	querydsl.AddClauseType(typeKey, LabelProcessor)
+	querydsl.AddClauseType(typeKey, LabelProcessor, nil)
 }

@@ -12,7 +12,7 @@ import (
 func main() {
 	querydsl.AddClauseType("foo", func(args map[string]interface{}) (elastic.Query, error) {
 		return elastic.NewTermQuery("user", "olivere"), nil
-	})
+	}, nil)
 	label.Register()
 	var jsonBlob = []byte(`{
 		"all": [{"type": "foo", "args": {}}],

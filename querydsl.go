@@ -58,11 +58,13 @@ func (c *GenericClause) Translate() (elastic.Query, error) {
 }
 
 var (
-	clauseProcessors = make(map[clause.ClauseType]clause.ClauseProcessor)
+	clauseProcessors    = make(map[clause.ClauseType]clause.ClauseProcessor)
+	clauseDocumentation = make(map[clause.ClauseType]interface{})
 )
 
-func AddClauseType(clausetype clause.ClauseType, processor clause.ClauseProcessor) {
+func AddClauseType(clausetype clause.ClauseType, processor clause.ClauseProcessor, documentation interface{}) {
 	clauseProcessors[clausetype] = processor
+	clauseDocumentation[clausetype] = documentation
 }
 
 // Translate turns a regular Clause into an elastic.Query

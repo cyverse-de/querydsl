@@ -37,7 +37,7 @@ func TestIsQuery_IsClause(t *testing.T) {
 func addTestingClauseType() Clause {
 	AddClauseType("foo", func(args map[string]interface{}) (elastic.Query, error) {
 		return elastic.NewTermQuery("user", "arbitrary"), nil
-	})
+	}, nil)
 
 	return Clause{Type: "foo"}
 }
