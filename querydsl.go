@@ -147,3 +147,7 @@ func AddClauseType(clausetype clause.ClauseType, processor clause.ClauseProcesso
 	clauseProcessors[clausetype] = processor
 	clauseDocumentation[clausetype] = documentation
 }
+
+func GetDocumentation() map[clause.ClauseType]clause.ClauseDocumentation {
+	return clauseDocumentation
+}
