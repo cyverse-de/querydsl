@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/cyverse-de/querydsl"
+	"github.com/cyverse-de/querydsl/clause"
 	"github.com/cyverse-de/querydsl/clause/label"
 	"gopkg.in/olivere/elastic.v5"
 )
@@ -12,7 +13,7 @@ import (
 func main() {
 	querydsl.AddClauseType("foo", func(args map[string]interface{}) (elastic.Query, error) {
 		return elastic.NewTermQuery("user", "olivere"), nil
-	}, nil)
+	}, clause.ClauseDocumentation{})
 	label.Register()
 	var jsonBlob = []byte(`{
 		"all": [{"type": "foo", "args": {}}],

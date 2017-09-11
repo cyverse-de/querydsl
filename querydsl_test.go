@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"gopkg.in/olivere/elastic.v5"
+
+	"github.com/cyverse-de/querydsl/clause"
 )
 
 func TestIsQuery_IsClause(t *testing.T) {
@@ -37,7 +39,7 @@ func TestIsQuery_IsClause(t *testing.T) {
 func addTestingClauseType() Clause {
 	AddClauseType("foo", func(args map[string]interface{}) (elastic.Query, error) {
 		return elastic.NewTermQuery("user", "arbitrary"), nil
-	}, nil)
+	}, clause.ClauseDocumentation{})
 
 	return Clause{Type: "foo"}
 }

@@ -11,7 +11,7 @@ import (
 
 var (
 	clauseProcessors    = make(map[clause.ClauseType]clause.ClauseProcessor)
-	clauseDocumentation = make(map[clause.ClauseType]interface{})
+	clauseDocumentation = make(map[clause.ClauseType]clause.ClauseDocumentation)
 )
 
 // Query represents a boolean query
@@ -143,7 +143,7 @@ func (q *Query) Translate() (elastic.Query, error) {
 // AddClauseType takes a string (as clause.ClauseType), a function to process,
 // and documentation, and registers them for use by the other functions in
 // querydsl
-func AddClauseType(clausetype clause.ClauseType, processor clause.ClauseProcessor, documentation interface{}) {
+func AddClauseType(clausetype clause.ClauseType, processor clause.ClauseProcessor, documentation clause.ClauseDocumentation) {
 	clauseProcessors[clausetype] = processor
 	clauseDocumentation[clausetype] = documentation
 }

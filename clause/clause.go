@@ -7,3 +7,13 @@ import (
 type ClauseType string
 
 type ClauseProcessor func(args map[string]interface{}) (elastic.Query, error)
+
+type ClauseArgumentDocumentation struct {
+	Type    string
+	Summary string
+}
+
+type ClauseDocumentation struct {
+	Summary string
+	Args    map[string]ClauseArgumentDocumentation
+}

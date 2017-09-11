@@ -2,6 +2,7 @@ package label
 
 import (
 	"github.com/cyverse-de/querydsl"
+	"github.com/cyverse-de/querydsl/clause"
 	"github.com/mitchellh/mapstructure"
 	"gopkg.in/olivere/elastic.v5"
 )
@@ -28,5 +29,5 @@ func LabelProcessor(args map[string]interface{}) (elastic.Query, error) {
 }
 
 func Register() {
-	querydsl.AddClauseType(typeKey, LabelProcessor, nil)
+	querydsl.AddClauseType(typeKey, LabelProcessor, clause.ClauseDocumentation{})
 }
