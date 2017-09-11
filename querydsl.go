@@ -9,6 +9,11 @@ import (
 	"gopkg.in/olivere/elastic.v5"
 )
 
+var (
+	clauseProcessors    = make(map[clause.ClauseType]clause.ClauseProcessor)
+	clauseDocumentation = make(map[clause.ClauseType]interface{})
+)
+
 // Query represents a boolean query
 type Query struct {
 	All  []*GenericClause `json:"all,omitempty"`
@@ -39,10 +44,6 @@ func (c *GenericClause) IsClause() bool {
 	return c.Clause != nil && len(c.Type) > 0
 }
 
-type Translatable interface {
-	Translate() (elastic.Query, error)
-}
-
 // Translate turns a GenericClause into an elastic.Query
 func (c *GenericClause) Translate() (elastic.Query, error) {
 	if c.IsQuery() {
@@ -55,16 +56,6 @@ func (c *GenericClause) Translate() (elastic.Query, error) {
 	} else {
 		return nil, fmt.Errorf("GenericClause %+v is neither a properly-formatted Query nor a Clause", c)
 	}
-}
-
-var (
-	clauseProcessors    = make(map[clause.ClauseType]clause.ClauseProcessor)
-	clauseDocumentation = make(map[clause.ClauseType]interface{})
-)
-
-func AddClauseType(clausetype clause.ClauseType, processor clause.ClauseProcessor, documentation interface{}) {
-	clauseProcessors[clausetype] = processor
-	clauseDocumentation[clausetype] = documentation
 }
 
 // Translate turns a regular Clause into an elastic.Query
@@ -147,4 +138,12 @@ func (q *Query) Translate() (elastic.Query, error) {
 			return baseQuery, nil
 		}
 	}
+}
+
+// AddClauseType takes a string (as clause.ClauseType), a function to process,
+// and documentation, and registers them for use by the other functions in
+// querydsl
+func AddClauseType(clausetype clause.ClauseType, processor clause.ClauseProcessor, documentation interface{}) {
+	clauseProcessors[clausetype] = processor
+	clauseDocumentation[clausetype] = documentation
 }
