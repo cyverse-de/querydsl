@@ -11,6 +11,15 @@ const (
 	typeKey = "label"
 )
 
+var (
+	documentation = clause.ClauseDocumentation{
+		Summary: "Searches based on an object's label (typically, its filename)",
+		Args: map[string]clause.ClauseArgumentDocumentation{
+			"label": clause.ClauseArgumentDocumentation{Type: "string", Summary: "The label to search for"},
+		},
+	}
+)
+
 type LabelArgs struct {
 	Label string
 	// Negation bool // TODO
@@ -29,5 +38,5 @@ func LabelProcessor(args map[string]interface{}) (elastic.Query, error) {
 }
 
 func Register() {
-	querydsl.AddClauseType(typeKey, LabelProcessor, clause.ClauseDocumentation{})
+	querydsl.AddClauseType(typeKey, LabelProcessor, documentation)
 }
