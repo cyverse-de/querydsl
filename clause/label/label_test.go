@@ -41,7 +41,7 @@ func TestLabelProcessor(t *testing.T) {
 		t.Error("query did not contain 'query'")
 	}
 
-	if stringQuery.(string) != "foo OR bar" {
-		t.Errorf("query %q did not match expected value %q", stringQuery, "foo OR bar")
+	if stringQuery.(string) != "*foo* OR *bar*" {
+		t.Errorf("query %q did not match expected value %q", stringQuery, "*foo* OR *bar*")
 	}
 }

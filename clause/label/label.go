@@ -34,8 +34,8 @@ func LabelProcessor(args map[string]interface{}) (elastic.Query, error) {
 		return nil, err
 	}
 
-	withOrOperator := clauseutils.AddOrOperator(realArgs.Label)
-	query := elastic.NewQueryStringQuery(withOrOperator).Field("label")
+	processedQuery := clauseutils.AddImplicitWildcard(clauseutils.AddOrOperator(realArgs.Label))
+	query := elastic.NewQueryStringQuery(processedQuery).Field("label")
 	return query, nil
 }
 
