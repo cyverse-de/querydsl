@@ -7,7 +7,7 @@ import (
 func TestLabelProcessor(t *testing.T) {
 	args := make(map[string]interface{})
 
-	args["label"] = "foo"
+	args["label"] = "foo bar"
 
 	query, err := LabelProcessor(args)
 	if err != nil {
@@ -41,7 +41,7 @@ func TestLabelProcessor(t *testing.T) {
 		t.Error("query did not contain 'query'")
 	}
 
-	if stringQuery.(string) != "foo" {
-		t.Error("query did not match expected value")
+	if stringQuery.(string) != "foo OR bar" {
+		t.Errorf("query %q did not match expected value %q", stringQuery, "foo OR bar")
 	}
 }

@@ -3,6 +3,7 @@ package label
 import (
 	"github.com/cyverse-de/querydsl"
 	"github.com/cyverse-de/querydsl/clause"
+	"github.com/cyverse-de/querydsl/clauseutils"
 	"github.com/mitchellh/mapstructure"
 	"gopkg.in/olivere/elastic.v5"
 )
@@ -33,7 +34,8 @@ func LabelProcessor(args map[string]interface{}) (elastic.Query, error) {
 		return nil, err
 	}
 
-	query := elastic.NewQueryStringQuery(realArgs.Label).Field("label")
+	withOrOperator := clauseutils.AddOrOperator(realArgs.Label)
+	query := elastic.NewQueryStringQuery(withOrOperator).Field("label")
 	return query, nil
 }
 
