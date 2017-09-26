@@ -1,6 +1,8 @@
 package label
 
 import (
+	"fmt"
+
 	"github.com/cyverse-de/querydsl"
 	"github.com/cyverse-de/querydsl/clause"
 	"github.com/cyverse-de/querydsl/clauseutils"
@@ -35,7 +37,7 @@ func LabelProcessor(args map[string]interface{}) (elastic.Query, error) {
 	}
 
 	processedQuery := clauseutils.AddImplicitWildcard(clauseutils.AddOrOperator(realArgs.Label))
-	query := elastic.NewQueryStringQuery(processedQuery).Field("label")
+	query := elastic.NewQueryStringQuery(processedQuery).Field("label").QueryName(fmt.Sprintf("label: %q", realArgs.Label))
 	return query, nil
 }
 
