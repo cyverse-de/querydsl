@@ -27,7 +27,6 @@ var (
 
 type LabelArgs struct {
 	Label string
-	// Negation bool // TODO
 	Exact bool
 }
 
