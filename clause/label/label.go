@@ -1,6 +1,7 @@
 package label
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/cyverse-de/querydsl"
@@ -35,6 +36,10 @@ func LabelProcessor(args map[string]interface{}) (elastic.Query, error) {
 	err := mapstructure.Decode(args, &realArgs)
 	if err != nil {
 		return nil, err
+	}
+
+	if realArgs.Label == "" {
+		return nil, errors.New("No label was passed, cannot create clause.")
 	}
 
 	var processedQuery string

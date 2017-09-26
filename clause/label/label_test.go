@@ -9,10 +9,12 @@ func TestLabelProcessor(t *testing.T) {
 		label         string
 		exact         string // "true", "false", or "nil" to not set
 		expectedQuery string
+		shouldErr     bool
 	}{
-		{"foo bar", "nil", "*foo* OR *bar*"},
-		{"foo bar", "false", "*foo* OR *bar*"},
-		{"foo bar", "true", "foo bar"},
+		{label: "foo bar", exact: "nil", expectedQuery: "*foo* OR *bar*"},
+		{label: "foo bar", exact: "false", expectedQuery: "*foo* OR *bar*"},
+		{label: "foo bar", exact: "true", expectedQuery: "foo bar"},
+		{exact: "nil", expectedQuery: "", shouldErr: true},
 	}
 
 	for _, c := range cases {
@@ -28,39 +30,42 @@ func TestLabelProcessor(t *testing.T) {
 		}
 
 		query, err := LabelProcessor(args)
-		if err != nil {
+		if c.shouldErr && err == nil {
+			t.Errorf("LabelProcessor should have failed, instead returned nil error and query %+v", query)
+		} else if !c.shouldErr && err != nil {
 			t.Errorf("LabelProcessor failed with error: %q", err)
-		}
-		source, err := query.Source()
-		if err != nil {
-			t.Errorf("Source get failed with error: %q", err)
-		}
+		} else if !c.shouldErr {
+			source, err := query.Source()
+			if err != nil {
+				t.Errorf("Source get failed with error: %q", err)
+			}
 
-		qsQuery, ok := source.(map[string]interface{})["query_string"]
-		if !ok {
-			t.Error("Source did not contain 'query_string'")
-		}
+			qsQuery, ok := source.(map[string]interface{})["query_string"]
+			if !ok {
+				t.Error("Source did not contain 'query_string'")
+			}
 
-		fields, ok := qsQuery.(map[string]interface{})["fields"]
-		if !ok {
-			t.Error("query did not contain 'fields'")
-		}
-		field, ok := fields.([]string)
-		if !ok {
-			t.Error("fields were not array")
-		}
+			fields, ok := qsQuery.(map[string]interface{})["fields"]
+			if !ok {
+				t.Error("query did not contain 'fields'")
+			}
+			field, ok := fields.([]string)
+			if !ok {
+				t.Error("fields were not array")
+			}
 
-		if field[0] != "label" {
-			t.Error("Specified field was not 'label'")
-		}
+			if field[0] != "label" {
+				t.Error("Specified field was not 'label'")
+			}
 
-		stringQuery, ok := qsQuery.(map[string]interface{})["query"]
-		if !ok {
-			t.Error("query did not contain 'query'")
-		}
+			stringQuery, ok := qsQuery.(map[string]interface{})["query"]
+			if !ok {
+				t.Error("query did not contain 'query'")
+			}
 
-		if stringQuery.(string) != c.expectedQuery {
-			t.Errorf("query %q did not match expected value %q", stringQuery, c.expectedQuery)
+			if stringQuery.(string) != c.expectedQuery {
+				t.Errorf("query %q did not match expected value %q", stringQuery, c.expectedQuery)
+			}
 		}
 	}
 }
