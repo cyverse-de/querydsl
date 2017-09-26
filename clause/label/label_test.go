@@ -5,43 +5,62 @@ import (
 )
 
 func TestLabelProcessor(t *testing.T) {
-	args := make(map[string]interface{})
-
-	args["label"] = "foo bar"
-
-	query, err := LabelProcessor(args)
-	if err != nil {
-		t.Errorf("LabelProcessor failed with error: %q", err)
-	}
-	source, err := query.Source()
-	if err != nil {
-		t.Errorf("Source get failed with error: %q", err)
+	cases := []struct {
+		label         string
+		exact         string // "true", "false", or "nil" to not set
+		expectedQuery string
+	}{
+		{"foo bar", "nil", "*foo* OR *bar*"},
+		{"foo bar", "false", "*foo* OR *bar*"},
+		{"foo bar", "true", "foo bar"},
 	}
 
-	qsQuery, ok := source.(map[string]interface{})["query_string"]
-	if !ok {
-		t.Error("Source did not contain 'query_string'")
-	}
+	for _, c := range cases {
+		args := make(map[string]interface{})
 
-	fields, ok := qsQuery.(map[string]interface{})["fields"]
-	if !ok {
-		t.Error("query did not contain 'fields'")
-	}
-	field, ok := fields.([]string)
-	if !ok {
-		t.Error("fields were not array")
-	}
+		args["label"] = c.label
+		if c.exact == "true" {
+			args["exact"] = true
+		} else if c.exact == "false" {
+			args["exact"] = false
+		} else if c.exact != "nil" {
+			t.Fatal("'exact' in a case was not set to one of 'true', 'false', or 'nil'")
+		}
 
-	if field[0] != "label" {
-		t.Error("Specified field was not 'label'")
-	}
+		query, err := LabelProcessor(args)
+		if err != nil {
+			t.Errorf("LabelProcessor failed with error: %q", err)
+		}
+		source, err := query.Source()
+		if err != nil {
+			t.Errorf("Source get failed with error: %q", err)
+		}
 
-	stringQuery, ok := qsQuery.(map[string]interface{})["query"]
-	if !ok {
-		t.Error("query did not contain 'query'")
-	}
+		qsQuery, ok := source.(map[string]interface{})["query_string"]
+		if !ok {
+			t.Error("Source did not contain 'query_string'")
+		}
 
-	if stringQuery.(string) != "*foo* OR *bar*" {
-		t.Errorf("query %q did not match expected value %q", stringQuery, "*foo* OR *bar*")
+		fields, ok := qsQuery.(map[string]interface{})["fields"]
+		if !ok {
+			t.Error("query did not contain 'fields'")
+		}
+		field, ok := fields.([]string)
+		if !ok {
+			t.Error("fields were not array")
+		}
+
+		if field[0] != "label" {
+			t.Error("Specified field was not 'label'")
+		}
+
+		stringQuery, ok := qsQuery.(map[string]interface{})["query"]
+		if !ok {
+			t.Error("query did not contain 'query'")
+		}
+
+		if stringQuery.(string) != c.expectedQuery {
+			t.Errorf("query %q did not match expected value %q", stringQuery, c.expectedQuery)
+		}
 	}
 }
