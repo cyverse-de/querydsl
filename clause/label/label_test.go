@@ -6,7 +6,7 @@ import (
 
 func TestLabelProcessor(t *testing.T) {
 	cases := []struct {
-		label         string
+		label         interface{}
 		exact         string // "true", "false", or "nil" to not set
 		expectedQuery string
 		shouldErr     bool
@@ -14,7 +14,8 @@ func TestLabelProcessor(t *testing.T) {
 		{label: "foo bar", exact: "nil", expectedQuery: "*foo* OR *bar*"},
 		{label: "foo bar", exact: "false", expectedQuery: "*foo* OR *bar*"},
 		{label: "foo bar", exact: "true", expectedQuery: "foo bar"},
-		{exact: "nil", expectedQuery: "", shouldErr: true},
+		{exact: "nil", shouldErr: true},             // empty label
+		{label: 444, exact: "nil", shouldErr: true}, // bad type
 	}
 
 	for _, c := range cases {
