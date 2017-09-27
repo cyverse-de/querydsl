@@ -12,7 +12,7 @@ import (
 	"gopkg.in/olivere/elastic.v5"
 )
 
-func PrintDocumentation() error {
+func PrintDocumentation(qd *querydsl.QueryDSL) error {
 	tmpl, err := template.New("documentation").Parse(`Available clause types:
 {{ range $k, $v := . }}{{ $k }}: {{ if $v.Summary }}{{ $v.Summary }}{{ else }}(no summary provided){{end}}
     Arguments:{{ if $v.Args }}{{ range $ak, $av := $v.Args }}
@@ -23,17 +23,18 @@ func PrintDocumentation() error {
 		return err
 	}
 
-	err = tmpl.Execute(os.Stdout, querydsl.GetDocumentation())
+	err = tmpl.Execute(os.Stdout, qd.GetDocumentation())
 	return err
 }
 
 func main() {
-	querydsl.AddClauseType("foo", func(args map[string]interface{}) (elastic.Query, error) {
+	qd := querydsl.New()
+	qd.AddClauseType("foo", func(args map[string]interface{}) (elastic.Query, error) {
 		return elastic.NewTermQuery("user", "olivere"), nil
 	}, clause.ClauseDocumentation{})
-	label.Register()
+	label.Register(qd)
 
-	err := PrintDocumentation()
+	err := PrintDocumentation(qd)
 	if err != nil {
 		fmt.Println("Error:", err)
 		return
@@ -51,7 +52,7 @@ func main() {
 		return
 	}
 	fmt.Printf("%+v\n", query)
-	translated, err := query.Translate()
+	translated, err := query.Translate(qd)
 	if err != nil {
 		fmt.Println("Error:", err)
 		return

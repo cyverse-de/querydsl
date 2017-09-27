@@ -9,10 +9,10 @@ import (
 	"gopkg.in/olivere/elastic.v5"
 )
 
-var (
-	clauseProcessors    = make(map[clause.ClauseType]clause.ClauseProcessor)
-	clauseDocumentation = make(map[clause.ClauseType]clause.ClauseDocumentation)
-)
+type QueryDSL struct {
+	clauseProcessors    map[clause.ClauseType]clause.ClauseProcessor
+	clauseDocumentation map[clause.ClauseType]clause.ClauseDocumentation
+}
 
 // Query represents a boolean query
 type Query struct {
@@ -45,21 +45,22 @@ func (c *GenericClause) IsClause() bool {
 }
 
 // Translate turns a GenericClause into an elastic.Query
-func (c *GenericClause) Translate() (elastic.Query, error) {
+func (c *GenericClause) Translate(qd *QueryDSL) (elastic.Query, error) {
 	if c.IsQuery() {
 		// Looks like it's another nested query.
 		query := Query{All: c.All, Any: c.Any, None: c.None}
-		return query.Translate()
+		return query.Translate(qd)
 	} else if c.IsClause() {
 		clause := Clause{Type: c.Type, Args: c.Args}
-		return clause.Translate()
+		return clause.Translate(qd)
 	} else {
 		return nil, fmt.Errorf("GenericClause %+v is neither a properly-formatted Query nor a Clause", c)
 	}
 }
 
 // Translate turns a regular Clause into an elastic.Query
-func (c *Clause) Translate() (elastic.Query, error) {
+func (c *Clause) Translate(qd *QueryDSL) (elastic.Query, error) {
+	clauseProcessors := qd.GetProcessors()
 	if processor, exists := clauseProcessors[c.Type]; exists {
 		return processor(c.Args)
 	}
@@ -74,7 +75,7 @@ func (c *Clause) Translate() (elastic.Query, error) {
 // all of the several calls is processed
 //
 // This long comment brought to you by the author not wanting to forget how this works
-func launchClauseTranslators(clauses []*GenericClause, waitgroup *sync.WaitGroup, resultsChan chan elastic.Query, errChan chan error) {
+func launchClauseTranslators(qd *QueryDSL, clauses []*GenericClause, waitgroup *sync.WaitGroup, resultsChan chan elastic.Query, errChan chan error) {
 	var innerwg sync.WaitGroup
 
 	waitgroup.Add(1)
@@ -83,7 +84,7 @@ func launchClauseTranslators(clauses []*GenericClause, waitgroup *sync.WaitGroup
 		innerwg.Add(1)
 		go func(clause *GenericClause, wg *sync.WaitGroup) {
 			defer wg.Done()
-			query, err := clause.Translate()
+			query, err := clause.Translate(qd)
 			if err != nil {
 				errChan <- err
 			} else {
@@ -99,7 +100,7 @@ func launchClauseTranslators(clauses []*GenericClause, waitgroup *sync.WaitGroup
 }
 
 // Translate turns a Query into an elastic.Query by way of translating everything contained within
-func (q *Query) Translate() (elastic.Query, error) {
+func (q *Query) Translate(qd *QueryDSL) (elastic.Query, error) {
 	baseQuery := elastic.NewBoolQuery()
 
 	// Result channels
@@ -113,9 +114,9 @@ func (q *Query) Translate() (elastic.Query, error) {
 	// errChan is used by everything to propagate errors
 	errChan := make(chan error)
 
-	launchClauseTranslators(q.All, &subpartswg, allChan, errChan)
-	launchClauseTranslators(q.Any, &subpartswg, anyChan, errChan)
-	launchClauseTranslators(q.None, &subpartswg, noneChan, errChan)
+	launchClauseTranslators(qd, q.All, &subpartswg, allChan, errChan)
+	launchClauseTranslators(qd, q.Any, &subpartswg, anyChan, errChan)
+	launchClauseTranslators(qd, q.None, &subpartswg, noneChan, errChan)
 
 	// wait for all translators to be done, then send a nil error to signal completion
 	go func() {
@@ -140,14 +141,24 @@ func (q *Query) Translate() (elastic.Query, error) {
 	}
 }
 
+func New() *QueryDSL {
+	processors := make(map[clause.ClauseType]clause.ClauseProcessor)
+	documentation := make(map[clause.ClauseType]clause.ClauseDocumentation)
+	return &QueryDSL{clauseProcessors: processors, clauseDocumentation: documentation}
+}
+
 // AddClauseType takes a string (as clause.ClauseType), a function to process,
 // and documentation, and registers them for use by the other functions in
 // querydsl
-func AddClauseType(clausetype clause.ClauseType, processor clause.ClauseProcessor, documentation clause.ClauseDocumentation) {
-	clauseProcessors[clausetype] = processor
-	clauseDocumentation[clausetype] = documentation
+func (qd *QueryDSL) AddClauseType(clausetype clause.ClauseType, processor clause.ClauseProcessor, documentation clause.ClauseDocumentation) {
+	qd.clauseProcessors[clausetype] = processor
+	qd.clauseDocumentation[clausetype] = documentation
 }
 
-func GetDocumentation() map[clause.ClauseType]clause.ClauseDocumentation {
-	return clauseDocumentation
+func (qd *QueryDSL) GetProcessors() map[clause.ClauseType]clause.ClauseProcessor {
+	return qd.clauseProcessors
+}
+
+func (qd *QueryDSL) GetDocumentation() map[clause.ClauseType]clause.ClauseDocumentation {
+	return qd.clauseDocumentation
 }
