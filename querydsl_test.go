@@ -36,28 +36,29 @@ func TestIsQuery_IsClause(t *testing.T) {
 	}
 }
 
-func addTestingClauseType() Clause {
-	AddClauseType("foo", func(args map[string]interface{}) (elastic.Query, error) {
+func addTestingClauseType() (*QueryDSL, Clause) {
+	qd := New()
+	qd.AddClauseType("foo", func(args map[string]interface{}) (elastic.Query, error) {
 		return elastic.NewTermQuery("user", "arbitrary"), nil
 	}, clause.ClauseDocumentation{})
 
-	return Clause{Type: "foo"}
+	return qd, Clause{Type: "foo"}
 }
 
 func TestTranslateClauseNoTypes(t *testing.T) {
 	t.Parallel()
 	clause := Clause{Type: "type-that-doesnt-exist"}
 
-	_, err := clause.Translate()
+	_, err := clause.Translate(New())
 	if err == nil {
 		t.Errorf("Translate did not return error using nonexistent clause type, which it should")
 	}
 }
 
 func TestTranslateClause(t *testing.T) {
-	clause := addTestingClauseType()
+	qd, clause := addTestingClauseType()
 
-	translated, err := clause.Translate()
+	translated, err := clause.Translate(qd)
 	if err != nil {
 		t.Errorf("Translate failed with error: %q", err)
 	}
@@ -85,21 +86,21 @@ func TestTranslateQueryNoTypes(t *testing.T) {
 	clause := Clause{Type: "type-that-doesnt-exist"}
 	query := Query{All: []*GenericClause{&GenericClause{Clause: &clause}}}
 
-	_, err := query.Translate()
+	_, err := query.Translate(New())
 	if err == nil {
 		t.Errorf("Translate did not return error using nonexistent clause type, which it should")
 	}
 }
 
 func TestTranslateQuery(t *testing.T) {
-	clause := addTestingClauseType()
+	qd, clause := addTestingClauseType()
 
 	queryAll := Query{All: []*GenericClause{&GenericClause{Clause: &clause}}}
 	queryAny := Query{Any: []*GenericClause{&GenericClause{Clause: &clause}}}
 	queryNone := Query{None: []*GenericClause{&GenericClause{Clause: &clause}}}
 
 	testGivenQuery := func(query Query, subfield string) {
-		translated, err := query.Translate()
+		translated, err := query.Translate(qd)
 		if err != nil {
 			t.Errorf("Translate failed with error: %q", err)
 		}

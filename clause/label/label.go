@@ -37,6 +37,6 @@ func LabelProcessor(args map[string]interface{}) (elastic.Query, error) {
 	return query, nil
 }
 
-func Register() {
-	querydsl.AddClauseType(typeKey, LabelProcessor, documentation)
+func Register(qd *querydsl.QueryDSL) {
+	qd.AddClauseType(typeKey, LabelProcessor, documentation)
 }
