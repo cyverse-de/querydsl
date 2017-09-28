@@ -29,9 +29,6 @@ func PrintDocumentation(qd *querydsl.QueryDSL) error {
 
 func main() {
 	qd := querydsl.New()
-	qd.AddClauseType("foo", func(args map[string]interface{}) (elastic.Query, error) {
-		return elastic.NewTermQuery("user", "olivere"), nil
-	}, clause.ClauseDocumentation{})
 	label.Register(qd)
 
 	err := PrintDocumentation(qd)
@@ -41,9 +38,7 @@ func main() {
 	}
 
 	var jsonBlob = []byte(`{
-		"all": [{"type": "foo", "args": {}}],
-		"any": [{"all": [], "any": [{"type": "foo", "args": {}}], "none": []}],
-		"none": [{"type": "label", "args": {"label": "foo"}}]
+		"all": [{"type": "label", "args": {"label": "PDAP.fel.tree"}}]
 	}`)
 	var query querydsl.Query
 	err = json.Unmarshal(jsonBlob, &query)
