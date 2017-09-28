@@ -7,9 +7,7 @@ import (
 	"text/template"
 
 	"github.com/cyverse-de/querydsl"
-	"github.com/cyverse-de/querydsl/clause"
 	"github.com/cyverse-de/querydsl/clause/label"
-	"gopkg.in/olivere/elastic.v5"
 )
 
 func PrintDocumentation(qd *querydsl.QueryDSL) error {
