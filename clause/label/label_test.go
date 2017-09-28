@@ -11,9 +11,10 @@ func TestLabelProcessor(t *testing.T) {
 		expectedQuery string
 		shouldErr     bool
 	}{
-		{label: "foo bar", exact: "nil", expectedQuery: "*foo* OR *bar*"},
-		{label: "foo bar", exact: "false", expectedQuery: "*foo* OR *bar*"},
+		{label: "foo bar", exact: "nil", expectedQuery: "*foo* *bar*"},
+		{label: "foo bar", exact: "false", expectedQuery: "*foo* *bar*"},
 		{label: "foo bar", exact: "true", expectedQuery: "foo bar"},
+		{label: "\"foo bar\"", exact: "false", expectedQuery: "\"foo bar\""},
 		{exact: "nil", shouldErr: true},             // empty label
 		{label: 444, exact: "nil", shouldErr: true}, // bad type
 	}

@@ -45,7 +45,7 @@ func LabelProcessor(args map[string]interface{}) (elastic.Query, error) {
 	if realArgs.Exact {
 		processedQuery = realArgs.Label
 	} else {
-		processedQuery = clauseutils.AddImplicitWildcard(clauseutils.AddOrOperator(realArgs.Label))
+		processedQuery = clauseutils.AddImplicitWildcard(realArgs.Label)
 	}
 	query := elastic.NewQueryStringQuery(processedQuery).Field("label").QueryName(fmt.Sprintf("label: %q", realArgs.Label))
 	return query, nil
