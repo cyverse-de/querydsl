@@ -27,3 +27,21 @@ func TestAddImplicitWildcard(t *testing.T) {
 		}
 	}
 }
+
+func TestAddImplicitUsernameWildcard(t *testing.T) {
+	cases := []struct {
+		input    string
+		expected string
+	}{
+		{"foo", "foo#*"},
+		{"foo#iplant", "foo#iplant"},
+		{"", "#*"},
+	}
+
+	for _, c := range cases {
+		gotValue := AddImplicitUsernameWildcard(c.input)
+		if gotValue != c.expected {
+			t.Errorf("Got %q but expected %q", gotValue, c.expected)
+		}
+	}
+}

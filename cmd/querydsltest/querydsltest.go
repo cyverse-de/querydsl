@@ -8,6 +8,7 @@ import (
 
 	"github.com/cyverse-de/querydsl"
 	"github.com/cyverse-de/querydsl/clause/label"
+	"github.com/cyverse-de/querydsl/clause/owner"
 	"github.com/cyverse-de/querydsl/clause/path"
 )
 
@@ -30,6 +31,7 @@ func main() {
 	qd := querydsl.New()
 	label.Register(qd)
 	path.Register(qd)
+	owner.Register(qd)
 
 	err := PrintDocumentation(qd)
 	if err != nil {
@@ -38,7 +40,8 @@ func main() {
 	}
 
 	var jsonBlob = []byte(`{
-		"all": [{"type": "path", "args": {"prefix": "/iplant/home"}}, {"type": "label", "args": {"label": "PDAP.fel.tree"}}]
+		"all": [{"type": "path", "args": {"prefix": "/iplant/home"}}, {"type": "label", "args": {"label": "PDAP.fel.tree"}}],
+		"any": [{"type": "owner", "args": {"owner": "ipctest"}}]
 	}`)
 	var query querydsl.Query
 	err = json.Unmarshal(jsonBlob, &query)

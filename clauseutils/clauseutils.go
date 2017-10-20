@@ -26,3 +26,12 @@ func AddImplicitWildcard(input string) string {
 
 	return strings.Join(rejoin, " ")
 }
+
+func AddImplicitUsernameWildcard(input string) string {
+	hasdelim := regexp.MustCompile(`[#]`)
+	if hasdelim.MatchString(input) {
+		return input
+	} else {
+		return input + "#*"
+	}
+}
