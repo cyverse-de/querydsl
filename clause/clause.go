@@ -9,11 +9,11 @@ type ClauseType string
 type ClauseProcessor func(args map[string]interface{}) (elastic.Query, error)
 
 type ClauseArgumentDocumentation struct {
-	Type    string
-	Summary string
+	Type    string `json:"type"`
+	Summary string `json:"summary"`
 }
 
 type ClauseDocumentation struct {
-	Summary string
-	Args    map[string]ClauseArgumentDocumentation
+	Summary string                                 `json:"summary"`
+	Args    map[string]ClauseArgumentDocumentation `json:"args"`
 }
