@@ -21,6 +21,7 @@ var (
 		Args: map[string]clause.ClauseArgumentDocumentation{
 			"users":      clause.ClauseArgumentDocumentation{Type: "[]string", Summary: "The users to search for. If there is only one user listed, if that username is not qualified (does not contain a # character), a wildcard will be added. If there are multiple users, they must all be qualified."},
 			"permission": clause.ClauseArgumentDocumentation{Type: "string", Summary: "The permission to check for; should be one of 'own', 'write', or 'read', with own implying write implying read. To search for objects where the user has no permissions, use 'read' in a negation."},
+			"exact":      clause.ClauseArgumentDocumentation{Type: "bool", Summary: "If set to true, do not add implicit wildcards even to usernames without the # character. This will effectively ignore those arguments."},
 		},
 	}
 )
@@ -28,6 +29,7 @@ var (
 type PermissionsArgs struct {
 	Users      []string
 	Permission string
+	Exact      bool
 }
 
 func PermissionsProcessor(args map[string]interface{}) (elastic.Query, error) {
@@ -54,8 +56,8 @@ func PermissionsProcessor(args map[string]interface{}) (elastic.Query, error) {
 
 	for _, user := range realArgs.Users {
 		processedUser := clauseutils.AddImplicitUsernameWildcard(user)
-		if processedUser == user {
-			terms = append(terms, processedUser)
+		if processedUser == user || realArgs.Exact {
+			terms = append(terms, user)
 		} else {
 			shoulds = append(shoulds, elastic.NewWildcardQuery("userPermissions.user", processedUser))
 		}
