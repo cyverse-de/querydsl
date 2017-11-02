@@ -66,7 +66,12 @@ func PermissionsProcessor(args map[string]interface{}) (elastic.Query, error) {
 	innerquery := elastic.NewBoolQuery().Must(elastic.NewTermQuery("userPermissions.permission", realArgs.Permission))
 
 	if len(terms) > 0 {
-		innerquery.Should(elastic.NewTermsQuery("userPermissions.user", terms...))
+		termsq := elastic.NewTermsQuery("userPermissions.user", terms...)
+		if len(shoulds) == 0 {
+			innerquery.Must(termsq)
+		} else {
+			innerquery.Should(termsq)
+		}
 	}
 	if len(shoulds) > 0 {
 		innerquery.Should(shoulds...)

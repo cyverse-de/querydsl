@@ -43,7 +43,8 @@ func main() {
 
 	var jsonBlob = []byte(`{
 		"all": [{"type": "path", "args": {"prefix": "/iplant/home"}}, {"type": "label", "args": {"label": "PDAP.fel.tree"}}, {"type": "permissions", "args": {"users": ["mian", "ipctest#iplant", "foo#bar", "baz"], "permission": "write"}}],
-		"any": [{"type": "owner", "args": {"owner": "ipctest"}}]
+		"any": [{"type": "owner", "args": {"owner": "ipctest"}}],
+		"none": [{"type": "permissions", "args": {"permission": "read", "users": ["mian#iplant", "ipctest#iplant"]}}]
 	}`)
 	var query querydsl.Query
 	err = json.Unmarshal(jsonBlob, &query)
