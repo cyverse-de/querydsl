@@ -21,10 +21,12 @@ func TestAddImplicitWildcard(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		gotValue := AddImplicitWildcard(c.input)
-		if gotValue != c.expected {
-			t.Errorf("Got %q but expected %q", gotValue, c.expected)
-		}
+		t.Run(c.input, func(t *testing.T) {
+			gotValue := AddImplicitWildcard(c.input)
+			if gotValue != c.expected {
+				t.Errorf("Got %q but expected %q", gotValue, c.expected)
+			}
+		})
 	}
 }
 
@@ -39,9 +41,11 @@ func TestAddImplicitUsernameWildcard(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		gotValue := AddImplicitUsernameWildcard(c.input)
-		if gotValue != c.expected {
-			t.Errorf("Got %q but expected %q", gotValue, c.expected)
-		}
+		t.Run(c.input, func(t *testing.T) {
+			gotValue := AddImplicitUsernameWildcard(c.input)
+			if gotValue != c.expected {
+				t.Errorf("Got %q but expected %q", gotValue, c.expected)
+			}
+		})
 	}
 }
