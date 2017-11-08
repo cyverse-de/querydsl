@@ -10,6 +10,7 @@ import (
 )
 
 func TestIsQuery_IsClause(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		query    Query
 		clause   Clause
@@ -26,6 +27,7 @@ func TestIsQuery_IsClause(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(fmt.Sprintf("GenericClause{Query: &%+v, Clause: &%+v}", c.query, c.clause), func(t *testing.T) {
+			t.Parallel()
 			genericClause := GenericClause{Query: &c.query, Clause: &c.clause}
 			isQuery := genericClause.IsQuery()
 			if isQuery != c.isQuery {
@@ -136,7 +138,16 @@ func TestTranslateQuery(t *testing.T) {
 		}
 	}
 
-	t.Run("must", func(t *testing.T) { testGivenQuery(t, queryAll, "must") })
-	t.Run("should", func(t *testing.T) { testGivenQuery(t, queryAny, "should") })
-	t.Run("must_not", func(t *testing.T) { testGivenQuery(t, queryNone, "must_not") })
+	t.Run("must", func(t *testing.T) {
+		t.Parallel()
+		testGivenQuery(t, queryAll, "must")
+	})
+	t.Run("should", func(t *testing.T) {
+		t.Parallel()
+		testGivenQuery(t, queryAny, "should")
+	})
+	t.Run("must_not", func(t *testing.T) {
+		t.Parallel()
+		testGivenQuery(t, queryNone, "must_not")
+	})
 }

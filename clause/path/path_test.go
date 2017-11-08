@@ -6,6 +6,7 @@ import (
 )
 
 func TestPathProcessor(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		prefix        interface{}
 		expectedQuery string
@@ -18,6 +19,7 @@ func TestPathProcessor(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(fmt.Sprintf("%T(%+v)", c.prefix, c.prefix), func(t *testing.T) {
+			t.Parallel()
 			args := make(map[string]interface{})
 
 			args["prefix"] = c.prefix

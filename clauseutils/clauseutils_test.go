@@ -5,6 +5,7 @@ import (
 )
 
 func TestAddImplicitWildcard(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		input    string
 		expected string
@@ -22,6 +23,7 @@ func TestAddImplicitWildcard(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.input, func(t *testing.T) {
+			t.Parallel()
 			gotValue := AddImplicitWildcard(c.input)
 			if gotValue != c.expected {
 				t.Errorf("Got %q but expected %q", gotValue, c.expected)
@@ -31,6 +33,7 @@ func TestAddImplicitWildcard(t *testing.T) {
 }
 
 func TestAddImplicitUsernameWildcard(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		input    string
 		expected string
@@ -42,6 +45,7 @@ func TestAddImplicitUsernameWildcard(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.input, func(t *testing.T) {
+			t.Parallel()
 			gotValue := AddImplicitUsernameWildcard(c.input)
 			if gotValue != c.expected {
 				t.Errorf("Got %q but expected %q", gotValue, c.expected)
