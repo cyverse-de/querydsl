@@ -1,6 +1,7 @@
 package querydsl
 
 import (
+	"fmt"
 	"testing"
 
 	"gopkg.in/olivere/elastic.v5"
@@ -24,15 +25,17 @@ func TestIsQuery_IsClause(t *testing.T) {
 		{Query{None: []*GenericClause{&GenericClause{}}}, Clause{}, true, false}, // arbitrary clause in None
 	}
 	for _, c := range cases {
-		genericClause := GenericClause{Query: &c.query, Clause: &c.clause}
-		isQuery := genericClause.IsQuery()
-		if isQuery != c.isQuery {
-			t.Errorf("GenericClause{Query: &%+v, Clause: &%+v} returned %q from IsQuery, not %q", c.query, c.clause, isQuery, c.isQuery)
-		}
-		isClause := genericClause.IsClause()
-		if isClause != c.isClause {
-			t.Errorf("GenericClause{Query: &%+v, Clause: &%+v} returned %q from IsClause, not %q", c.query, c.clause, isClause, c.isClause)
-		}
+		t.Run(fmt.Sprintf("GenericClause{Query: &%+v, Clause: &%+v}", c.query, c.clause), func(t *testing.T) {
+			genericClause := GenericClause{Query: &c.query, Clause: &c.clause}
+			isQuery := genericClause.IsQuery()
+			if isQuery != c.isQuery {
+				t.Errorf("returned %q from IsQuery, not %q", isQuery, c.isQuery)
+			}
+			isClause := genericClause.IsClause()
+			if isClause != c.isClause {
+				t.Errorf("returned %q from IsClause, not %q", isClause, c.isClause)
+			}
+		})
 	}
 }
 
@@ -99,7 +102,7 @@ func TestTranslateQuery(t *testing.T) {
 	queryAny := Query{Any: []*GenericClause{&GenericClause{Clause: &clause}}}
 	queryNone := Query{None: []*GenericClause{&GenericClause{Clause: &clause}}}
 
-	testGivenQuery := func(query Query, subfield string) {
+	testGivenQuery := func(t *testing.T, query Query, subfield string) {
 		translated, err := query.Translate(qd)
 		if err != nil {
 			t.Errorf("Translate failed with error: %q", err)
@@ -133,7 +136,7 @@ func TestTranslateQuery(t *testing.T) {
 		}
 	}
 
-	testGivenQuery(queryAll, "must")
-	testGivenQuery(queryAny, "should")
-	testGivenQuery(queryNone, "must_not")
+	t.Run("must", func(t *testing.T) { testGivenQuery(t, queryAll, "must") })
+	t.Run("should", func(t *testing.T) { testGivenQuery(t, queryAny, "should") })
+	t.Run("must_not", func(t *testing.T) { testGivenQuery(t, queryNone, "must_not") })
 }
