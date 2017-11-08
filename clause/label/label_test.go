@@ -6,7 +6,6 @@ import (
 )
 
 func TestLabelProcessor(t *testing.T) {
-	t.Parallel()
 	cases := []struct {
 		label         interface{}
 		exact         string // "true", "false", or "nil" to not set
@@ -23,7 +22,6 @@ func TestLabelProcessor(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(fmt.Sprintf("%T(%+v)-exact:%s", c.label, c.label, c.exact), func(t *testing.T) {
-			t.Parallel()
 			args := make(map[string]interface{})
 
 			args["label"] = c.label
