@@ -8,6 +8,7 @@ import (
 type permissionTestCase struct {
 	users             interface{}
 	permission        string
+	permissionRecurse bool
 	exact             bool
 	expectedTerms     []string
 	expectedWildcards []string
@@ -50,7 +51,7 @@ func stringSliceSetEqual(a []interface{}, b []string) (bool, string) {
 	return true, ""
 }
 
-// individualClause takes a clause and returns if it was a term clause, a terms clause, and/or a wildcard clause, and if a wildcard it returns what the query string was, for comparing as a set.
+// individualClause takes a clause and returns if it was for permissions, a user terms clause, and/or a user wildcard clause, and if a wildcard it returns what the query string was, for comparing as a set.
 func individualClause(t *testing.T, c permissionTestCase, clause interface{}) (bool, bool, bool, string) {
 	term, termOk := clause.(map[string]interface{})["term"]
 	terms, termsOk := clause.(map[string]interface{})["terms"]
@@ -64,21 +65,36 @@ func individualClause(t *testing.T, c permissionTestCase, clause interface{}) (b
 		}
 		return true, false, false, ""
 	} else if termsOk {
+		// a terms query might be either
+		// * (most likely) a set of users matched exactly
+		// * a permissions clause for the case of write + recursive
 		userPart, ok := terms.(map[string]interface{})["userPermissions.user"]
-		if !ok {
-			t.Error("Terms query was not for the userPermissions.user field")
-		}
+		if ok {
+			// Set of users
+			userList, ok := userPart.([]interface{})
+			if !ok {
+				t.Error("user terms were  was not an array")
+			}
 
-		userList, ok := userPart.([]interface{})
-		if !ok {
-			t.Error("user terms were  was not an array")
-		}
+			setEqual, missing := stringSliceSetEqual(userList, c.expectedTerms)
+			if !setEqual {
+				t.Errorf("Expected user list %+v to contain %s but did not", userList, missing)
+			}
+			return false, true, false, ""
+		} else {
+			// Permissions write + recursive, or error
+			permsPart, ok := terms.(map[string]interface{})["userPermissions.permission"]
+			if !ok {
+				t.Error("A terms clause was neither for the user nor the permission field")
+			}
 
-		setEqual, missing := stringSliceSetEqual(userList, c.expectedTerms)
-		if !setEqual {
-			t.Errorf("Expected user list %+v to contain %s but did not", userList, missing)
+			permsList, ok := permsPart.([]interface{})
+			setEqual, _ := stringSliceSetEqual(permsList, []string{"write", "own"})
+			if !setEqual {
+				t.Errorf("Expected permission list %+v to contain write and own but did not", permsList)
+			}
+			return true, false, false, ""
 		}
-		return false, true, false, ""
 	} else if wildcardOk {
 		userPart, ok := wildcard.(map[string]interface{})["userPermissions.user"]
 		if !ok {
@@ -106,6 +122,12 @@ func TestPermissionsProcessor(t *testing.T) {
 		{users: []string{"mian"}, permission: "own", expectedWildcards: []string{"mian#*"}},
 		{users: []string{"mian"}, permission: "own", exact: true, expectedTerms: []string{"mian"}},
 		{users: []string{"mian#foo"}, permission: "own", expectedTerms: []string{"mian#foo"}},
+		{users: []string{"mian#foo"}, permission: "read", permissionRecurse: true, expectedTerms: []string{"mian#foo"}},
+		{users: []string{"mian#foo", "ipctest#foo"}, permission: "read", permissionRecurse: true, expectedTerms: []string{"mian#foo", "ipctest#foo"}},
+		{users: []string{"mian#foo", "ipctest"}, permission: "read", permissionRecurse: true, expectedTerms: []string{"mian#foo"}, expectedWildcards: []string{"ipctest#*"}},
+		{users: []string{"mian#foo"}, permission: "write", permissionRecurse: true, expectedTerms: []string{"mian#foo"}},
+		{users: []string{"mian#foo", "ipctest#foo"}, permission: "write", permissionRecurse: true, expectedTerms: []string{"mian#foo", "ipctest#foo"}},
+		{users: []string{"mian#foo", "ipctest"}, permission: "write", permissionRecurse: true, expectedTerms: []string{"mian#foo"}, expectedWildcards: []string{"ipctest#*"}},
 		{users: []string{"mian#foo", "mian"}, permission: "own", expectedTerms: []string{"mian#foo"}, expectedWildcards: []string{"mian#*"}},
 		{users: []string{"ipctest", "mian"}, permission: "own", expectedWildcards: []string{"mian#*", "ipctest#*"}},
 		{users: []int{666}, shouldErr: true},
@@ -114,11 +136,12 @@ func TestPermissionsProcessor(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		t.Run(fmt.Sprintf("permission:%s-exact:%t-users:%+v", c.permission, c.exact, c.users), func(t *testing.T) {
+		t.Run(fmt.Sprintf("permission:%s-exact:%t-recurse:%t-users:%+v", c.permission, c.exact, c.permissionRecurse, c.users), func(t *testing.T) {
 			args := make(map[string]interface{})
 
 			args["users"] = c.users
 			args["permission"] = c.permission
+			args["permission_recurse"] = c.permissionRecurse
 			args["exact"] = c.exact
 
 			query, err := PermissionsProcessor(args)
@@ -159,12 +182,28 @@ func TestPermissionsProcessor(t *testing.T) {
 					t.Error("bool query had more than one subkey (should only have 'must')")
 				}
 
+				// there should be a 'should' clause if:
+				// * if there is more than one inexact search
+				// * there is a mix of exact and inexact searches
+				shouldHaveShould := len(c.expectedWildcards) > 1 || (len(c.expectedWildcards) > 0 && len(c.expectedTerms) > 0)
+
+				// A permission clause only *doesn't* exist if it's set to read + recursive
+				hasPermissionClause := !(c.permission == "read" && c.permissionRecurse)
+
+				// 'must' can only have two items if
+				// a.) there is no should clause
+				// b.) there is a permission clause
+				mustShouldBeArray := !shouldHaveShould && hasPermissionClause
+
+				// 'must' should exist if:
+				// * there is a permission clause
+				// * there is no should clause
+				mustShouldExist := !shouldHaveShould || hasPermissionClause
+
 				mustQuery, ok := boolQuery.(map[string]interface{})["must"]
-				if !ok {
+				if !ok && mustShouldExist {
 					t.Error("bool query did not have 'must' subkey")
 				}
-
-				mustShouldBeArray := len(c.users.([]string)) == 1
 
 				mustQueryArray, ok := mustQuery.([]interface{})
 				if mustShouldBeArray && !ok {
@@ -175,30 +214,36 @@ func TestPermissionsProcessor(t *testing.T) {
 					t.Error("'must' was not two elements long")
 				}
 
-				if !mustShouldBeArray {
+				if !mustShouldBeArray && mustShouldExist {
 					mustQueryArray = []interface{}{
 						mustQuery.(interface{}),
 					}
 				}
 
-				hasTerm := false
-				hasTerms := false
+				hasPerm := false // also set to true if one is not expected
+				hasUserTerms := false
 				hasWildcard := false
 				foundWildcards := make([]string, 0, 0)
+
+				if !hasPermissionClause {
+					// no permission clause needs to be present if none should be present
+					hasPerm = true
+				}
+
 				for _, clause := range mustQueryArray {
 					indivTerm, indivTerms, indivWildcard, foundWildcardString := individualClause(t, c, clause)
 					foundWildcards = append(foundWildcards, foundWildcardString)
 					if indivTerm {
-						hasTerm = true
+						hasPerm = true
 					}
 					if indivTerms {
-						hasTerms = true
+						hasUserTerms = true
 					}
 					if indivWildcard {
 						hasWildcard = true
 					}
 				}
-				if !mustShouldBeArray {
+				if shouldHaveShould {
 					shouldQuery, ok := boolQuery.(map[string]interface{})["should"]
 					if !ok {
 						t.Error("bool query did not have 'should' subkey")
@@ -212,10 +257,10 @@ func TestPermissionsProcessor(t *testing.T) {
 						indivTerm, indivTerms, indivWildcard, foundWildcardString := individualClause(t, c, clause)
 						foundWildcards = append(foundWildcards, foundWildcardString)
 						if indivTerm {
-							hasTerm = true
+							hasPerm = true
 						}
 						if indivTerms {
-							hasTerms = true
+							hasUserTerms = true
 						}
 						if indivWildcard {
 							hasWildcard = true
@@ -223,7 +268,7 @@ func TestPermissionsProcessor(t *testing.T) {
 					}
 				}
 
-				if !(hasTerm && (hasWildcard || hasTerms)) {
+				if !(hasPerm && (hasWildcard || hasUserTerms)) {
 					t.Error("query did not have both a term and either a wildcard or a terms query")
 				}
 

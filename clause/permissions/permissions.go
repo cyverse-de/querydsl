@@ -19,17 +19,19 @@ var (
 	documentation = clause.ClauseDocumentation{
 		Summary: "Searches based on an object's permissions for specified users",
 		Args: map[string]clause.ClauseArgumentDocumentation{
-			"users":      clause.ClauseArgumentDocumentation{Type: "[]string", Summary: "The users to search for. If there is only one user listed, if that username is not qualified (does not contain a # character), a wildcard will be added. If there are multiple users, they must all be qualified."},
-			"permission": clause.ClauseArgumentDocumentation{Type: "string", Summary: "The permission to check for; should be one of 'own', 'write', or 'read', with own implying write implying read. To search for objects where the user has no permissions, use 'read' in a negation."},
-			"exact":      clause.ClauseArgumentDocumentation{Type: "bool", Summary: "If set to true, do not add implicit wildcards even to usernames without the # character. This will effectively ignore those arguments."},
+			"users":              clause.ClauseArgumentDocumentation{Type: "[]string", Summary: "The users to search for. If there is only one user listed, if that username is not qualified (does not contain a # character), a wildcard will be added. If there are multiple users, they must all be qualified."},
+			"permission":         clause.ClauseArgumentDocumentation{Type: "string", Summary: "The permission to check for; should be one of 'own', 'write', or 'read', with own implying write implying read. To search for objects where the user has no permissions, use 'read' in a negation."},
+			"permission_recurse": clause.ClauseArgumentDocumentation{Type: "bool", Summary: "If set to true, 'read' permission will also match write and own, and 'write' permission will also match own."},
+			"exact":              clause.ClauseArgumentDocumentation{Type: "bool", Summary: "If set to true, do not add implicit wildcards even to usernames without the # character. This will effectively ignore those arguments."},
 		},
 	}
 )
 
 type PermissionsArgs struct {
-	Users      []string
-	Permission string
-	Exact      bool
+	Users             []string
+	Permission        string
+	PermissionRecurse bool `mapstructure:"permission_recurse"`
+	Exact             bool
 }
 
 func PermissionsProcessor(args map[string]interface{}) (elastic.Query, error) {
@@ -51,6 +53,7 @@ func PermissionsProcessor(args map[string]interface{}) (elastic.Query, error) {
 		return nil, fmt.Errorf("Got a permission of %q, but expected read, write, or own.", realArgs.Permission)
 	}
 
+	var innerquery *elastic.BoolQuery
 	var terms []interface{}
 	var shoulds []elastic.Query
 
@@ -63,7 +66,15 @@ func PermissionsProcessor(args map[string]interface{}) (elastic.Query, error) {
 		}
 	}
 
-	innerquery := elastic.NewBoolQuery().Must(elastic.NewTermQuery("userPermissions.permission", realArgs.Permission))
+	if realArgs.PermissionRecurse && realArgs.Permission == "read" {
+		// We don't need to filter on the permission at all; any permission matches.
+		innerquery = elastic.NewBoolQuery()
+	} else if realArgs.PermissionRecurse && realArgs.Permission == "write" {
+		innerquery = elastic.NewBoolQuery().Must(elastic.NewTermsQuery("userPermissions.permission", "write", "own"))
+	} else {
+		// if the permission is recursive at this point, it's only for ownership, so we needn't add anything extra
+		innerquery = elastic.NewBoolQuery().Must(elastic.NewTermQuery("userPermissions.permission", realArgs.Permission))
+	}
 
 	if len(terms) > 0 {
 		termsq := elastic.NewTermsQuery("userPermissions.user", terms...)
