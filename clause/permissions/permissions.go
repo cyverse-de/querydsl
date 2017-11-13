@@ -73,7 +73,9 @@ func PermissionsProcessor(args map[string]interface{}) (elastic.Query, error) {
 			innerquery.Should(termsq)
 		}
 	}
-	if len(shoulds) > 0 {
+	if len(shoulds) == 1 && len(terms) == 0 {
+		innerquery.Must(shoulds...)
+	} else if len(shoulds) > 0 {
 		innerquery.Should(shoulds...)
 	}
 
