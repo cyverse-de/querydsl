@@ -132,9 +132,11 @@ func TestPermissionsProcessor(t *testing.T) {
 		{users: []string{"mian", "ipctest"}, permission: "write", permissionRecurse: true, expectedWildcards: []string{"mian#*", "ipctest#*"}},
 		{users: []string{"mian#foo", "mian"}, permission: "own", expectedTerms: []string{"mian#foo"}, expectedWildcards: []string{"mian#*"}},
 		{users: []string{"ipctest", "mian"}, permission: "own", expectedWildcards: []string{"mian#*", "ipctest#*"}},
-		{users: []int{666}, shouldErr: true},
-		{shouldErr: true},             // empty owner
-		{users: 444, shouldErr: true}, // bad type
+		{users: []string{"mian"}, shouldErr: true},                      // no permission
+		{users: []string{"mian"}, permission: "wrong", shouldErr: true}, // bad permission
+		{shouldErr: true},                                               // empty owner
+		{users: []int{666}, shouldErr: true},                            // bad type
+		{users: 444, shouldErr: true},                                   // bad type
 	}
 
 	for _, c := range cases {

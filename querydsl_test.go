@@ -93,6 +93,15 @@ func TestTranslateQueryNoTypes(t *testing.T) {
 	}
 }
 
+func TestTranslateGenericClauseEmpty(t *testing.T) {
+	query := GenericClause{}
+
+	_, err := query.Translate(New())
+	if err == nil {
+		t.Errorf("Translate did not return an error when passed an empty query")
+	}
+}
+
 func TestTranslateQuery(t *testing.T) {
 	qd, clause := addTestingClauseType()
 
