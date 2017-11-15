@@ -102,6 +102,31 @@ func TestTranslateGenericClauseEmpty(t *testing.T) {
 	}
 }
 
+func testSection(t *testing.T, source interface{}, subfield string) {
+	boolQuery, ok := source.(map[string]interface{})["bool"]
+	if !ok {
+		t.Error("did not contain 'bool'")
+	}
+
+	section, ok := boolQuery.(map[string]interface{})[subfield]
+	if !ok {
+		t.Errorf("bool did not contain '%s'", subfield)
+	}
+
+	termQuery, ok := section.(map[string]interface{})["term"]
+	if !ok {
+		t.Error("subfield did not contain 'term'")
+	}
+
+	userValue, ok := termQuery.(map[string]interface{})["user"]
+	if !ok {
+		t.Error("term query did not contain 'user'")
+	}
+	if userValue.(string) != "arbitrary" {
+		t.Errorf("term user query was %q rather than %q", userValue, "arbitrary")
+	}
+}
+
 func TestTranslateQuery(t *testing.T) {
 	qd, clause := addTestingClauseType()
 
@@ -119,28 +144,7 @@ func TestTranslateQuery(t *testing.T) {
 			t.Errorf("Source get failed with error: %q", err)
 		}
 
-		boolQuery, ok := querySource.(map[string]interface{})["bool"]
-		if !ok {
-			t.Error("Source did not contain 'bool'")
-		}
-
-		section, ok := boolQuery.(map[string]interface{})[subfield]
-		if !ok {
-			t.Errorf("bool did not contain '%s'", subfield)
-		}
-
-		termQuery, ok := section.(map[string]interface{})["term"]
-		if !ok {
-			t.Error("subfield did not contain 'term'")
-		}
-
-		userValue, ok := termQuery.(map[string]interface{})["user"]
-		if !ok {
-			t.Error("term query did not contain 'user'")
-		}
-		if userValue.(string) != "arbitrary" {
-			t.Errorf("term user query was %q rather than %q", userValue, "arbitrary")
-		}
+		testSection(t, querySource, subfield)
 	}
 
 	t.Run("must", func(t *testing.T) {
@@ -151,5 +155,27 @@ func TestTranslateQuery(t *testing.T) {
 	})
 	t.Run("must_not", func(t *testing.T) {
 		testGivenQuery(t, queryNone, "must_not")
+	})
+
+	queryNested := Query{Any: []*GenericClause{&GenericClause{Query: &Query{All: []*GenericClause{&GenericClause{Clause: &clause}}}}}}
+	t.Run("nested_query", func(t *testing.T) {
+		translated, err := queryNested.Translate(qd)
+		if err != nil {
+			t.Errorf("Translate failed with error: %q", err)
+		}
+		querySource, err := translated.Source()
+		if err != nil {
+			t.Errorf("Source get failed with error: %q", err)
+		}
+		boolQuery, ok := querySource.(map[string]interface{})["bool"]
+		if !ok {
+			t.Error("did not contain 'bool'")
+		}
+
+		section, ok := boolQuery.(map[string]interface{})["should"]
+		if !ok {
+			t.Error("bool did not contain 'should'")
+		}
+		testSection(t, section, "must")
 	})
 }
