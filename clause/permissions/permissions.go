@@ -19,10 +19,10 @@ var (
 	documentation = clause.ClauseDocumentation{
 		Summary: "Searches based on an object's permissions for specified users",
 		Args: map[string]clause.ClauseArgumentDocumentation{
-			"users":              clause.ClauseArgumentDocumentation{Type: "[]string", Summary: "The users to search for. If there is only one user listed, if that username is not qualified (does not contain a # character), a wildcard will be added. If there are multiple users, they must all be qualified."},
-			"permission":         clause.ClauseArgumentDocumentation{Type: "string", Summary: "The permission to check for; should be one of 'own', 'write', or 'read', with own implying write implying read. To search for objects where the user has no permissions, use 'read' in a negation."},
+			"users":              clause.ClauseArgumentDocumentation{Type: "[]string", Summary: "The users to search for. If a given username is not qualified (does not contain a # character), a wildcard will be added unless 'exact' is set to true."},
+			"permission":         clause.ClauseArgumentDocumentation{Type: "string", Summary: "The permission to check for; should be one of 'own', 'write', or 'read', with own implying write implying read. To search for objects where the user has no permissions at all, use 'read' in a negation and set permission_recurse to true."},
 			"permission_recurse": clause.ClauseArgumentDocumentation{Type: "bool", Summary: "If set to true, 'read' permission will also match write and own, and 'write' permission will also match own."},
-			"exact":              clause.ClauseArgumentDocumentation{Type: "bool", Summary: "If set to true, do not add implicit wildcards even to usernames without the # character. This will effectively ignore those arguments."},
+			"exact":              clause.ClauseArgumentDocumentation{Type: "bool", Summary: "If set to true, do not add implicit wildcards even to usernames without the # character. This will in general effectively ignore those arguments, but may improve performance slightly if all the usernames are already known to be qualified appropriately."},
 		},
 	}
 )
