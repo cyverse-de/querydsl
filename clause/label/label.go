@@ -1,6 +1,7 @@
 package label
 
 import (
+	"context"
 	"errors"
 
 	"github.com/cyverse-de/querydsl"
@@ -29,7 +30,7 @@ type LabelArgs struct {
 	Exact bool
 }
 
-func LabelProcessor(args map[string]interface{}) (elastic.Query, error) {
+func LabelProcessor(_ context.Context, args map[string]interface{}) (elastic.Query, error) {
 	var realArgs LabelArgs
 	err := mapstructure.Decode(args, &realArgs)
 	if err != nil {

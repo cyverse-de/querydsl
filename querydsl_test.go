@@ -1,6 +1,7 @@
 package querydsl
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -41,7 +42,7 @@ func TestIsQuery_IsClause(t *testing.T) {
 
 func addTestingClauseType() (*QueryDSL, Clause) {
 	qd := New()
-	qd.AddClauseType("foo", func(args map[string]interface{}) (elastic.Query, error) {
+	qd.AddClauseType("foo", func(_ context.Context, args map[string]interface{}) (elastic.Query, error) {
 		return elastic.NewTermQuery("user", "arbitrary"), nil
 	}, clause.ClauseDocumentation{})
 
@@ -51,7 +52,7 @@ func addTestingClauseType() (*QueryDSL, Clause) {
 func TestTranslateClauseNoTypes(t *testing.T) {
 	clause := Clause{Type: "type-that-doesnt-exist"}
 
-	_, err := clause.Translate(New())
+	_, err := clause.Translate(context.Background(), New())
 	if err == nil {
 		t.Errorf("Translate did not return error using nonexistent clause type, which it should")
 	}
@@ -60,7 +61,7 @@ func TestTranslateClauseNoTypes(t *testing.T) {
 func TestTranslateClause(t *testing.T) {
 	qd, clause := addTestingClauseType()
 
-	translated, err := clause.Translate(qd)
+	translated, err := clause.Translate(context.Background(), qd)
 	if err != nil {
 		t.Errorf("Translate failed with error: %q", err)
 	}
@@ -87,7 +88,7 @@ func TestTranslateQueryNoTypes(t *testing.T) {
 	clause := Clause{Type: "type-that-doesnt-exist"}
 	query := Query{All: []*GenericClause{&GenericClause{Clause: &clause}}}
 
-	_, err := query.Translate(New())
+	_, err := query.Translate(context.Background(), New())
 	if err == nil {
 		t.Errorf("Translate did not return error using nonexistent clause type, which it should")
 	}
@@ -96,7 +97,7 @@ func TestTranslateQueryNoTypes(t *testing.T) {
 func TestTranslateGenericClauseEmpty(t *testing.T) {
 	query := GenericClause{}
 
-	_, err := query.Translate(New())
+	_, err := query.Translate(context.Background(), New())
 	if err == nil {
 		t.Errorf("Translate did not return an error when passed an empty query")
 	}
@@ -135,7 +136,7 @@ func TestTranslateQuery(t *testing.T) {
 	queryNone := Query{None: []*GenericClause{&GenericClause{Clause: &clause}}}
 
 	testGivenQuery := func(t *testing.T, query Query, subfield string) {
-		translated, err := query.Translate(qd)
+		translated, err := query.Translate(context.Background(), qd)
 		if err != nil {
 			t.Errorf("Translate failed with error: %q", err)
 		}
@@ -159,7 +160,7 @@ func TestTranslateQuery(t *testing.T) {
 
 	queryNested := Query{Any: []*GenericClause{&GenericClause{Query: &Query{All: []*GenericClause{&GenericClause{Clause: &clause}}}}}}
 	t.Run("nested_query", func(t *testing.T) {
-		translated, err := queryNested.Translate(qd)
+		translated, err := queryNested.Translate(context.Background(), qd)
 		if err != nil {
 			t.Errorf("Translate failed with error: %q", err)
 		}

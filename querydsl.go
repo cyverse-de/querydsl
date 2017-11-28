@@ -2,6 +2,7 @@
 package querydsl
 
 import (
+	"context"
 	"fmt"
 	"sync"
 
@@ -45,24 +46,24 @@ func (c *GenericClause) IsClause() bool {
 }
 
 // Translate turns a GenericClause into an elastic.Query
-func (c *GenericClause) Translate(qd *QueryDSL) (elastic.Query, error) {
+func (c *GenericClause) Translate(ctx context.Context, qd *QueryDSL) (elastic.Query, error) {
 	if c.IsQuery() {
 		// Looks like it's another nested query.
 		query := Query{All: c.All, Any: c.Any, None: c.None}
-		return query.Translate(qd)
+		return query.Translate(ctx, qd)
 	} else if c.IsClause() {
 		clause := Clause{Type: c.Type, Args: c.Args}
-		return clause.Translate(qd)
+		return clause.Translate(ctx, qd)
 	} else {
 		return nil, fmt.Errorf("GenericClause %+v is neither a properly-formatted Query nor a Clause", c)
 	}
 }
 
 // Translate turns a regular Clause into an elastic.Query
-func (c *Clause) Translate(qd *QueryDSL) (elastic.Query, error) {
+func (c *Clause) Translate(ctx context.Context, qd *QueryDSL) (elastic.Query, error) {
 	clauseProcessors := qd.GetProcessors()
 	if processor, exists := clauseProcessors[c.Type]; exists {
-		return processor(c.Args)
+		return processor(ctx, c.Args)
 	}
 	return nil, fmt.Errorf("No processor found for type '%s'", c.Type)
 }
@@ -75,7 +76,7 @@ func (c *Clause) Translate(qd *QueryDSL) (elastic.Query, error) {
 // all of the several calls is processed
 //
 // This long comment brought to you by the author not wanting to forget how this works
-func launchClauseTranslators(qd *QueryDSL, clauses []*GenericClause, waitgroup *sync.WaitGroup, resultsChan chan elastic.Query, errChan chan error) {
+func launchClauseTranslators(ctx context.Context, qd *QueryDSL, clauses []*GenericClause, waitgroup *sync.WaitGroup, resultsChan chan elastic.Query, errChan chan error) {
 	var innerwg sync.WaitGroup
 
 	waitgroup.Add(1)
@@ -84,7 +85,7 @@ func launchClauseTranslators(qd *QueryDSL, clauses []*GenericClause, waitgroup *
 		innerwg.Add(1)
 		go func(clause *GenericClause, wg *sync.WaitGroup) {
 			defer wg.Done()
-			query, err := clause.Translate(qd)
+			query, err := clause.Translate(ctx, qd)
 			if err != nil {
 				errChan <- err
 			} else {
@@ -100,7 +101,7 @@ func launchClauseTranslators(qd *QueryDSL, clauses []*GenericClause, waitgroup *
 }
 
 // Translate turns a Query into an elastic.Query by way of translating everything contained within
-func (q *Query) Translate(qd *QueryDSL) (elastic.Query, error) {
+func (q *Query) Translate(ctx context.Context, qd *QueryDSL) (elastic.Query, error) {
 	baseQuery := elastic.NewBoolQuery()
 
 	// Result channels
@@ -114,9 +115,9 @@ func (q *Query) Translate(qd *QueryDSL) (elastic.Query, error) {
 	// errChan is used by everything to propagate errors
 	errChan := make(chan error)
 
-	launchClauseTranslators(qd, q.All, &subpartswg, allChan, errChan)
-	launchClauseTranslators(qd, q.Any, &subpartswg, anyChan, errChan)
-	launchClauseTranslators(qd, q.None, &subpartswg, noneChan, errChan)
+	launchClauseTranslators(ctx, qd, q.All, &subpartswg, allChan, errChan)
+	launchClauseTranslators(ctx, qd, q.Any, &subpartswg, anyChan, errChan)
+	launchClauseTranslators(ctx, qd, q.None, &subpartswg, noneChan, errChan)
 
 	// wait for all translators to be done, then send a nil error to signal completion
 	go func() {

@@ -1,6 +1,7 @@
 package label
 
 import (
+	"context"
 	"fmt"
 	"testing"
 )
@@ -33,7 +34,7 @@ func TestLabelProcessor(t *testing.T) {
 				t.Fatal("'exact' in a case was not set to one of 'true', 'false', or 'nil'")
 			}
 
-			query, err := LabelProcessor(args)
+			query, err := LabelProcessor(context.Background(), args)
 			if c.shouldErr && err == nil {
 				t.Errorf("LabelProcessor should have failed, instead returned nil error and query %+v", query)
 			} else if !c.shouldErr && err != nil {

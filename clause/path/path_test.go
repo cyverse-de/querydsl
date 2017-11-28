@@ -1,6 +1,7 @@
 package path
 
 import (
+	"context"
 	"fmt"
 	"testing"
 )
@@ -22,7 +23,7 @@ func TestPathProcessor(t *testing.T) {
 
 			args["prefix"] = c.prefix
 
-			query, err := PathProcessor(args)
+			query, err := PathProcessor(context.Background(), args)
 			if c.shouldErr && err == nil {
 				t.Errorf("PathProcessor should have failed, instead returned nil error and query %+v", query)
 			} else if !c.shouldErr && err != nil {

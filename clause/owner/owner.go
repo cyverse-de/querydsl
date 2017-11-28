@@ -1,6 +1,7 @@
 package owner
 
 import (
+	"context"
 	"errors"
 
 	"github.com/cyverse-de/querydsl"
@@ -27,7 +28,7 @@ type OwnerArgs struct {
 	Owner string
 }
 
-func OwnerProcessor(args map[string]interface{}) (elastic.Query, error) {
+func OwnerProcessor(_ context.Context, args map[string]interface{}) (elastic.Query, error) {
 	var realArgs OwnerArgs
 	err := mapstructure.Decode(args, &realArgs)
 	if err != nil {

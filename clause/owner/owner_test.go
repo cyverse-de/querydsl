@@ -1,6 +1,7 @@
 package owner
 
 import (
+	"context"
 	"testing"
 )
 
@@ -21,7 +22,7 @@ func TestOwnerProcessor(t *testing.T) {
 
 		args["owner"] = c.owner
 
-		query, err := OwnerProcessor(args)
+		query, err := OwnerProcessor(context.Background(), args)
 		if c.shouldErr && err == nil {
 			t.Errorf("OwnerProcessor should have failed, instead returned nil error and query %+v", query)
 		} else if !c.shouldErr && err != nil {

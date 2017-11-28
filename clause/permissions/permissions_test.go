@@ -1,6 +1,7 @@
 package permissions
 
 import (
+	"context"
 	"fmt"
 	"testing"
 )
@@ -148,7 +149,7 @@ func TestPermissionsProcessor(t *testing.T) {
 			args["permission_recurse"] = c.permissionRecurse
 			args["exact"] = c.exact
 
-			query, err := PermissionsProcessor(args)
+			query, err := PermissionsProcessor(context.Background(), args)
 			if c.shouldErr && err == nil {
 				t.Errorf("PermissionsProcessor should have failed, instead returned nil error and query %+v", query)
 			} else if !c.shouldErr && err != nil {

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -53,7 +54,7 @@ func main() {
 		return
 	}
 	fmt.Printf("%+v\n", query)
-	translated, err := query.Translate(qd)
+	translated, err := query.Translate(context.Background(), qd)
 	if err != nil {
 		fmt.Println("Error:", err)
 		return

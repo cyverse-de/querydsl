@@ -1,6 +1,7 @@
 package permissions
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -34,7 +35,7 @@ type PermissionsArgs struct {
 	Exact             bool
 }
 
-func PermissionsProcessor(args map[string]interface{}) (elastic.Query, error) {
+func PermissionsProcessor(_ context.Context, args map[string]interface{}) (elastic.Query, error) {
 	var realArgs PermissionsArgs
 	err := mapstructure.Decode(args, &realArgs)
 	if err != nil {

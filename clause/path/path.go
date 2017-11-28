@@ -1,6 +1,7 @@
 package path
 
 import (
+	"context"
 	"errors"
 
 	"github.com/cyverse-de/querydsl"
@@ -26,7 +27,7 @@ type PathArgs struct {
 	Prefix string
 }
 
-func PathProcessor(args map[string]interface{}) (elastic.Query, error) {
+func PathProcessor(_ context.Context, args map[string]interface{}) (elastic.Query, error) {
 	var realArgs PathArgs
 	err := mapstructure.Decode(args, &realArgs)
 	if err != nil {
