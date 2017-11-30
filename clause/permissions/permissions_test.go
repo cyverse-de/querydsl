@@ -90,6 +90,9 @@ func individualClause(t *testing.T, c permissionTestCase, clause interface{}) (b
 		}
 
 		permsList, ok := permsPart.([]interface{})
+		if !ok {
+			t.Error("Permission field was not an array")
+		}
 		setEqual, _ := stringSliceSetEqual(permsList, []string{"write", "own"})
 		if !setEqual {
 			t.Errorf("Expected permission list %+v to contain write and own but did not", permsList)
