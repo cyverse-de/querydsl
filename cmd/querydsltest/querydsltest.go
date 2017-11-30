@@ -14,7 +14,7 @@ import (
 	"github.com/cyverse-de/querydsl/clause/permissions"
 )
 
-func PrintDocumentation(qd *querydsl.QueryDSL) error {
+func printDocumentation(qd *querydsl.QueryDSL) error {
 	tmpl, err := template.New("documentation").Parse(`Available clause types:
 {{ range $k, $v := . }}{{ $k }}: {{ if $v.Summary }}{{ $v.Summary }}{{ else }}(no summary provided){{end}}
     Arguments:{{ if $v.Args }}{{ range $ak, $av := $v.Args }}
@@ -36,7 +36,7 @@ func main() {
 	owner.Register(qd)
 	permissions.Register(qd)
 
-	err := PrintDocumentation(qd)
+	err := printDocumentation(qd)
 	if err != nil {
 		fmt.Println("Error:", err)
 		return

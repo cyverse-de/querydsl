@@ -36,16 +36,16 @@ func makeISet(a []interface{}) map[string]bool {
 
 // a string slice set-equality function suitable really only for this case
 func stringSliceSetEqual(a []interface{}, b []string) (bool, string) {
-	set_a := makeISet(a)
+	setA := makeISet(a)
 	for _, item := range b {
-		if !set_a[item] {
+		if !setA[item] {
 			return false, item
 		}
 	}
 
-	set_b := makeSSet(b)
+	setB := makeSSet(b)
 	for _, item := range a {
-		if !set_b[item.(string)] {
+		if !setB[item.(string)] {
 			return false, item.(string)
 		}
 	}
@@ -82,20 +82,19 @@ func individualClause(t *testing.T, c permissionTestCase, clause interface{}) (b
 				t.Errorf("Expected user list %+v to contain %s but did not", userList, missing)
 			}
 			return false, true, false, ""
-		} else {
-			// Permissions write + recursive, or error
-			permsPart, ok := terms.(map[string]interface{})["userPermissions.permission"]
-			if !ok {
-				t.Error("A terms clause was neither for the user nor the permission field")
-			}
-
-			permsList, ok := permsPart.([]interface{})
-			setEqual, _ := stringSliceSetEqual(permsList, []string{"write", "own"})
-			if !setEqual {
-				t.Errorf("Expected permission list %+v to contain write and own but did not", permsList)
-			}
-			return true, false, false, ""
 		}
+		// else: Permissions write + recursive, or error
+		permsPart, ok := terms.(map[string]interface{})["userPermissions.permission"]
+		if !ok {
+			t.Error("A terms clause was neither for the user nor the permission field")
+		}
+
+		permsList, ok := permsPart.([]interface{})
+		setEqual, _ := stringSliceSetEqual(permsList, []string{"write", "own"})
+		if !setEqual {
+			t.Errorf("Expected permission list %+v to contain write and own but did not", permsList)
+		}
+		return true, false, false, ""
 	} else if wildcardOk {
 		userPart, ok := wildcard.(map[string]interface{})["userPermissions.user"]
 		if !ok {
@@ -112,10 +111,10 @@ func individualClause(t *testing.T, c permissionTestCase, clause interface{}) (b
 			t.Errorf("Wildcard query part %q did not match any of expected values %v", userWildcard, c.expectedWildcards)
 		}
 		return false, false, true, userWildcard.(string)
-	} else {
-		t.Error("A clause is none of term, terms, or wildcard")
-		return false, false, false, ""
 	}
+
+	t.Error("A clause is none of term, terms, or wildcard")
+	return false, false, false, ""
 }
 
 func TestPermissionsProcessor(t *testing.T) {

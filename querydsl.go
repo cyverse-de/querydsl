@@ -10,6 +10,7 @@ import (
 	"gopkg.in/olivere/elastic.v5"
 )
 
+// QueryDSL represents a collection of processors and their documentation to use for translation
 type QueryDSL struct {
 	clauseProcessors    map[clause.ClauseType]clause.ClauseProcessor
 	clauseDocumentation map[clause.ClauseType]clause.ClauseDocumentation
@@ -142,6 +143,7 @@ func (q *Query) Translate(ctx context.Context, qd *QueryDSL) (elastic.Query, err
 	}
 }
 
+// New creates a new empty QueryDSL
 func New() *QueryDSL {
 	processors := make(map[clause.ClauseType]clause.ClauseProcessor)
 	documentation := make(map[clause.ClauseType]clause.ClauseDocumentation)
@@ -156,10 +158,12 @@ func (qd *QueryDSL) AddClauseType(clausetype clause.ClauseType, processor clause
 	qd.clauseDocumentation[clausetype] = documentation
 }
 
+// GetProcessors returns all the clause processors registered to a QueryDSL
 func (qd *QueryDSL) GetProcessors() map[clause.ClauseType]clause.ClauseProcessor {
 	return qd.clauseProcessors
 }
 
+// GetProcessors returns documentation (if present) for all the clause processors registered to a QueryDSL
 func (qd *QueryDSL) GetDocumentation() map[clause.ClauseType]clause.ClauseDocumentation {
 	return qd.clauseDocumentation
 }

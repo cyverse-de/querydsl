@@ -27,11 +27,11 @@ func AddImplicitWildcard(input string) string {
 	return strings.Join(rejoin, " ")
 }
 
+// Add ImplicitWildnameWildcard adds '#*' to input usernames which do not already contain a # character (which is the delimiter for qualified iRODS usernames)
 func AddImplicitUsernameWildcard(input string) string {
 	hasdelim := regexp.MustCompile(`[#]`)
 	if hasdelim.MatchString(input) {
 		return input
-	} else {
-		return input + "#*"
 	}
+	return input + "#*"
 }
