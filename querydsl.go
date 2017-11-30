@@ -163,7 +163,7 @@ func (qd *QueryDSL) GetProcessors() map[clause.ClauseType]clause.ClauseProcessor
 	return qd.clauseProcessors
 }
 
-// GetProcessors returns documentation (if present) for all the clause processors registered to a QueryDSL
+// GetDocumentation returns documentation (if present) for all the clause processors registered to a QueryDSL
 func (qd *QueryDSL) GetDocumentation() map[clause.ClauseType]clause.ClauseDocumentation {
 	return qd.clauseDocumentation
 }
