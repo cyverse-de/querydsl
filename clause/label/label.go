@@ -19,8 +19,8 @@ var (
 	documentation = clause.ClauseDocumentation{
 		Summary: "Searches based on an object's label (typically, its filename)",
 		Args: map[string]clause.ClauseArgumentDocumentation{
-			"label": clause.ClauseArgumentDocumentation{Type: "string", Summary: "The label to search for"},
-			"exact": clause.ClauseArgumentDocumentation{Type: "bool", Summary: "Whether to search more precisely, or whether the query should be processed to add wildcards"},
+			"label": {Type: "string", Summary: "The label to search for"},
+			"exact": {Type: "bool", Summary: "Whether to search more precisely, or whether the query should be processed to add wildcards"},
 		},
 	}
 )

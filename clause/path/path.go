@@ -18,7 +18,7 @@ var (
 	documentation = clause.ClauseDocumentation{
 		Summary: "Searches based on an object's full path",
 		Args: map[string]clause.ClauseArgumentDocumentation{
-			"prefix": clause.ClauseArgumentDocumentation{Type: "string", Summary: "The path prefix to search for"},
+			"prefix": {Type: "string", Summary: "The path prefix to search for"},
 		},
 	}
 )

@@ -19,7 +19,7 @@ var (
 	documentation = clause.ClauseDocumentation{
 		Summary: "Searches based on an object's owner(s)",
 		Args: map[string]clause.ClauseArgumentDocumentation{
-			"owner": clause.ClauseArgumentDocumentation{Type: "string", Summary: "The owner to search for. If it includes a # character, it will be searched exactly, otherwise the zone will be wildcarded."},
+			"owner": {Type: "string", Summary: "The owner to search for. If it includes a # character, it will be searched exactly, otherwise the zone will be wildcarded."},
 		},
 	}
 )

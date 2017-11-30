@@ -20,10 +20,10 @@ func TestIsQuery_IsClause(t *testing.T) {
 		{Query{}, Clause{}, false, false},
 		{Query{All: nil, Any: nil, None: nil}, Clause{}, false, false},
 		{Query{}, Clause{Type: ""}, false, false},
-		{Query{}, Clause{Type: "arbitrary"}, false, true},                        // arbitrary type in clause
-		{Query{All: []*GenericClause{&GenericClause{}}}, Clause{}, true, false},  // arbitrary clause in All
-		{Query{Any: []*GenericClause{&GenericClause{}}}, Clause{}, true, false},  // arbitrary clause in Any
-		{Query{None: []*GenericClause{&GenericClause{}}}, Clause{}, true, false}, // arbitrary clause in None
+		{Query{}, Clause{Type: "arbitrary"}, false, true},          // arbitrary type in clause
+		{Query{All: []*GenericClause{{}}}, Clause{}, true, false},  // arbitrary clause in All
+		{Query{Any: []*GenericClause{{}}}, Clause{}, true, false},  // arbitrary clause in Any
+		{Query{None: []*GenericClause{{}}}, Clause{}, true, false}, // arbitrary clause in None
 	}
 	for _, c := range cases {
 		t.Run(fmt.Sprintf("GenericClause{Query: &%+v, Clause: &%+v}", c.query, c.clause), func(t *testing.T) {
@@ -86,7 +86,7 @@ func TestTranslateClause(t *testing.T) {
 
 func TestTranslateQueryNoTypes(t *testing.T) {
 	clause := Clause{Type: "type-that-doesnt-exist"}
-	query := Query{All: []*GenericClause{&GenericClause{Clause: &clause}}}
+	query := Query{All: []*GenericClause{{Clause: &clause}}}
 
 	_, err := query.Translate(context.Background(), New())
 	if err == nil {
@@ -131,9 +131,9 @@ func testSection(t *testing.T, source interface{}, subfield string) {
 func TestTranslateQuery(t *testing.T) {
 	qd, clause := addTestingClauseType()
 
-	queryAll := Query{All: []*GenericClause{&GenericClause{Clause: &clause}}}
-	queryAny := Query{Any: []*GenericClause{&GenericClause{Clause: &clause}}}
-	queryNone := Query{None: []*GenericClause{&GenericClause{Clause: &clause}}}
+	queryAll := Query{All: []*GenericClause{{Clause: &clause}}}
+	queryAny := Query{Any: []*GenericClause{{Clause: &clause}}}
+	queryNone := Query{None: []*GenericClause{{Clause: &clause}}}
 
 	testGivenQuery := func(t *testing.T, query Query, subfield string) {
 		translated, err := query.Translate(context.Background(), qd)
@@ -158,7 +158,7 @@ func TestTranslateQuery(t *testing.T) {
 		testGivenQuery(t, queryNone, "must_not")
 	})
 
-	queryNested := Query{Any: []*GenericClause{&GenericClause{Query: &Query{All: []*GenericClause{&GenericClause{Clause: &clause}}}}}}
+	queryNested := Query{Any: []*GenericClause{{Query: &Query{All: []*GenericClause{{Clause: &clause}}}}}}
 	t.Run("nested_query", func(t *testing.T) {
 		translated, err := queryNested.Translate(context.Background(), qd)
 		if err != nil {
