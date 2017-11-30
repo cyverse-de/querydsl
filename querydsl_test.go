@@ -30,11 +30,11 @@ func TestIsQuery_IsClause(t *testing.T) {
 			genericClause := GenericClause{Query: &c.query, Clause: &c.clause}
 			isQuery := genericClause.IsQuery()
 			if isQuery != c.isQuery {
-				t.Errorf("returned %q from IsQuery, not %q", isQuery, c.isQuery)
+				t.Errorf("returned %v from IsQuery, not %v", isQuery, c.isQuery)
 			}
 			isClause := genericClause.IsClause()
 			if isClause != c.isClause {
-				t.Errorf("returned %q from IsClause, not %q", isClause, c.isClause)
+				t.Errorf("returned %v from IsClause, not %v", isClause, c.isClause)
 			}
 		})
 	}
