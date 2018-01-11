@@ -18,6 +18,7 @@ func TestAddImplicitWildcard(t *testing.T) {
 		{"*foo OR bar", "*foo OR bar"},
 		{"\\foo", "\\foo"},
 		{"fo? OR x", "fo? OR x"},
+		{"", ""},
 	}
 
 	for _, c := range cases {

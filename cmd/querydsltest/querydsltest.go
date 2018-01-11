@@ -9,6 +9,7 @@ import (
 
 	"github.com/cyverse-de/querydsl"
 	"github.com/cyverse-de/querydsl/clause/label"
+	"github.com/cyverse-de/querydsl/clause/metadata"
 	"github.com/cyverse-de/querydsl/clause/owner"
 	"github.com/cyverse-de/querydsl/clause/path"
 	"github.com/cyverse-de/querydsl/clause/permissions"
@@ -35,6 +36,7 @@ func main() {
 	path.Register(qd)
 	owner.Register(qd)
 	permissions.Register(qd)
+	metadata.Register(qd)
 
 	err := printDocumentation(qd)
 	if err != nil {
@@ -44,7 +46,7 @@ func main() {
 
 	var jsonBlob = []byte(`{
 		"all": [{"type": "path", "args": {"prefix": "/iplant/home"}}, {"type": "label", "args": {"label": "PDAP.fel.tree"}}, {"type": "permissions", "args": {"users": ["mian", "ipctest#iplant", "foo#bar", "baz"], "permission": "write"}}],
-		"any": [{"type": "owner", "args": {"owner": "ipctest"}}],
+		"any": [{"type": "owner", "args": {"owner": "ipctest"}},{"type": "metadata", "args": {"attribute": "foo", "value": "bar", "attribute_exact": true}},{"type": "metadata", "args": {"attribute": "foo", "value": "bar", "attribute_exact": true, "value_exact": true, "metadata_types": ["irods"]}}],
 		"none": [{"type": "permissions", "args": {"permission": "read", "users": ["mian#iplant", "ipctest#iplant"]}}]
 	}`)
 	var query querydsl.Query
