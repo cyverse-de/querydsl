@@ -28,6 +28,12 @@ type QueryStringQ struct {
 	} `mapstructure:"query_string"`
 }
 
+type MainMetadataQ struct {
+	Bool struct {
+		Should interface{}
+	}
+}
+
 func TestNested(t *testing.T) {
 	cases := []struct {
 		attribute string
@@ -171,21 +177,17 @@ func TestMetadataProcessor(t *testing.T) {
 					t.Errorf("Source get failed with error: %q", err)
 				}
 
-				boolQuery, ok := source.(map[string]interface{})["bool"]
-				if !ok {
-					t.Error("Source did not contain 'bool'")
-				}
-
-				should, ok := boolQuery.(map[string]interface{})["should"]
-				if !ok {
-					t.Error("Bool query did not contain 'should'")
+				var decoded MainMetadataQ
+				err = mapstructure.Decode(source, &decoded)
+				if err != nil {
+					t.Errorf("Decode failed with error: %q", err)
 				}
 
 				includeCyverse := len(c.metadataTypes) == 0 || len(c.metadataTypes) == 2 || c.metadataTypes[0] == "cyverse"
 				includeIrods := len(c.metadataTypes) == 0 || len(c.metadataTypes) == 2 || c.metadataTypes[0] == "irods"
 
+				shouldArr, ok := decoded.Bool.Should.([]interface{})
 				if includeCyverse {
-					shouldArr, ok := should.([]interface{})
 					if !ok {
 						t.Error("'should' was not an array, but should have been")
 					}
@@ -200,7 +202,6 @@ func TestMetadataProcessor(t *testing.T) {
 						}
 					}
 				} else if includeIrods {
-					_, ok := should.([]interface{})
 					if ok {
 						t.Error("'should' was an array, but should not have been")
 					}
