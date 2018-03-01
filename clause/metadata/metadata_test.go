@@ -5,7 +5,106 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+
+	"github.com/mitchellh/mapstructure"
 )
+
+type BoolNestedI struct {
+	Must interface{}
+}
+
+type BoolNestedQ struct {
+	Bool BoolNestedI
+}
+
+type NestedQ struct {
+	Path      string
+	ScoreMode string `mapstructure:"score_mode"`
+	Query     BoolNestedQ
+}
+
+type MakeNested struct {
+	Nested NestedQ
+}
+
+type QueryStringI struct {
+	Query  string
+	Fields []string
+}
+
+type QueryStringQ struct {
+	QueryString QueryStringI `mapstructure:"query_string"`
+}
+
+func TestNested(t *testing.T) {
+	cases := []struct {
+		attribute string
+		value     string
+		unit      string
+	}{
+		{attribute: "testa"},
+		{value: "testv"},
+		{unit: "testu"},
+		{attribute: "testav-a", value: "testav-v"},
+	}
+
+	for _, c := range cases {
+		t.Run(fmt.Sprintf("%+v,%+v,%+v", c.attribute, c.value, c.unit), func(t *testing.T) {
+			v := makeNested(c.attribute, c.value, c.unit)
+
+			source, err := v.Source()
+			if err != nil {
+				t.Errorf("Source get failed with error: %q", err)
+			}
+
+			var decoded MakeNested
+			err = mapstructure.Decode(source, &decoded)
+
+			if err != nil {
+				t.Errorf("Decode failed with error: %q", err)
+			}
+
+			if decoded.Nested.Path != "metadata" {
+				t.Error("Nested path is not 'metadata'")
+			}
+
+			if c.attribute != "" && c.value != "" {
+				mq, ok := decoded.Nested.Query.Bool.Must.([]interface{})
+				if !ok {
+					t.Error("Could not grab an array from 'must'")
+				}
+
+				var first QueryStringQ
+				err = mapstructure.Decode(mq[0], &first)
+				if err != nil {
+					t.Errorf("Decode failed with error: %q", err)
+				}
+
+				if first.QueryString.Fields[0] != "metadata.attribute" {
+					t.Error("First nested query had wrong field")
+				}
+
+				if first.QueryString.Query != c.attribute {
+					t.Error("First nested query had wrong query string")
+				}
+
+				var second QueryStringQ
+				err = mapstructure.Decode(mq[1], &second)
+				if err != nil {
+					t.Errorf("Decode failed with error: %q", err)
+				}
+
+				if second.QueryString.Fields[0] != "metadata.value" {
+					t.Error("Second nested query had wrong field")
+				}
+
+				if second.QueryString.Query != c.value {
+					t.Error("Second nested query had wrong query string")
+				}
+			}
+		})
+	}
+}
 
 func TestMetadataProcessor(t *testing.T) {
 	cases := []struct {
@@ -26,6 +125,9 @@ func TestMetadataProcessor(t *testing.T) {
 		//{label: "foo bar", exact: "true", expectedQuery: "foo bar"},
 		//{label: "\"foo bar\"", exact: "false", expectedQuery: "\"foo bar\""},
 		{attribute: "test", attributeExact: "nil", valueExact: "nil", unitExact: "nil"},
+		{attribute: "test", metadataTypes: []string{"cyverse"}, attributeExact: "nil", valueExact: "nil", unitExact: "nil"},
+		{attribute: "test", metadataTypes: []string{"irods"}, attributeExact: "nil", valueExact: "nil", unitExact: "nil"},
+		{attribute: "test", metadataTypes: []string{"cyverse", "irods"}, attributeExact: "nil", valueExact: "nil", unitExact: "nil"},
 		{attribute: "test", metadataTypes: []string{"invalid"}, attributeExact: "nil", valueExact: "nil", unitExact: "nil", shouldErr: true}, // invalid type
 		{attributeExact: "nil", valueExact: "nil", unitExact: "nil", shouldErr: true},                                                        // empty attr/value/unit
 		{attribute: 444, attributeExact: "nil", valueExact: "nil", unitExact: "nil", shouldErr: true},                                        // bad type
@@ -72,37 +174,48 @@ func TestMetadataProcessor(t *testing.T) {
 			} else if !c.shouldErr && err != nil {
 				t.Errorf("MetadataProcessor failed with error: %q", err)
 			} else if !c.shouldErr {
-				_, err := query.Source()
+				source, err := query.Source()
 				if err != nil {
 					t.Errorf("Source get failed with error: %q", err)
 				}
 
-				//qsQuery, ok := source.(map[string]interface{})["query_string"]
-				//if !ok {
-				//	t.Error("Source did not contain 'query_string'")
-				//}
+				boolQuery, ok := source.(map[string]interface{})["bool"]
+				if !ok {
+					t.Error("Source did not contain 'bool'")
+				}
 
-				//fields, ok := qsQuery.(map[string]interface{})["fields"]
-				//if !ok {
-				//	t.Error("query did not contain 'fields'")
-				//}
-				//field, ok := fields.([]string)
-				//if !ok {
-				//	t.Error("fields were not array")
-				//}
+				should, ok := boolQuery.(map[string]interface{})["should"]
+				if !ok {
+					t.Error("Bool query did not contain 'should'")
+				}
 
-				//if field[0] != "label" {
-				//	t.Error("Specified field was not 'label'")
-				//}
+				includeCyverse := len(c.metadataTypes) == 0 || len(c.metadataTypes) == 2 || c.metadataTypes[0] == "cyverse"
+				includeIrods := len(c.metadataTypes) == 0 || len(c.metadataTypes) == 2 || c.metadataTypes[0] == "irods"
 
-				//stringQuery, ok := qsQuery.(map[string]interface{})["query"]
-				//if !ok {
-				//	t.Error("query did not contain 'query'")
-				//}
+				if includeCyverse {
+					shouldArr, ok := should.([]interface{})
+					if !ok {
+						t.Error("'should' was not an array, but should have been")
+					}
 
-				//if stringQuery.(string) != c.expectedQuery {
-				//	t.Errorf("query %q did not match expected value %q", stringQuery, c.expectedQuery)
-				//}
+					if includeIrods {
+						if len(shouldArr) != 3 {
+							t.Error("'should' should have three entries")
+						}
+					} else {
+						if len(shouldArr) != 2 {
+							t.Error("'should' should have two entries")
+						}
+					}
+				} else if includeIrods {
+					_, ok := should.([]interface{})
+					if ok {
+						t.Error("'should' was an array, but should not have been")
+					}
+
+				}
+
+				// If the numbers look right, we'll figure that the query for the nested query creation is doing right due to the tests above.
 			}
 		})
 	}
