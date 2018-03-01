@@ -9,31 +9,23 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
-type BoolNestedI struct {
-	Must interface{}
-}
-
-type BoolNestedQ struct {
-	Bool BoolNestedI
-}
-
-type NestedQ struct {
-	Path      string
-	ScoreMode string `mapstructure:"score_mode"`
-	Query     BoolNestedQ
-}
-
 type MakeNested struct {
-	Nested NestedQ
-}
-
-type QueryStringI struct {
-	Query  string
-	Fields []string
+	Nested struct {
+		Path      string
+		ScoreMode string `mapstructure:"score_mode"`
+		Query     struct {
+			Bool struct {
+				Must interface{}
+			}
+		}
+	}
 }
 
 type QueryStringQ struct {
-	QueryString QueryStringI `mapstructure:"query_string"`
+	QueryString struct {
+		Query  string
+		Fields []string
+	} `mapstructure:"query_string"`
 }
 
 func TestNested(t *testing.T) {
