@@ -51,7 +51,8 @@ const (
 )
 
 // CreateRangeQuery creates a simple range query for a field, and integer lower/upper limits, plus a RangeType to specify behavior
-func CreateRangeQuery(field string, rangetype RangeType, lower int, upper int) elastic.Query {
+// Range values are int64s since this stuff deals with large numbers
+func CreateRangeQuery(field string, rangetype RangeType, lower int64, upper int64) elastic.Query {
 	rq := elastic.NewRangeQuery(field)
 	if rangetype == Both || rangetype == UpperOnly {
 		rq.Lte(upper)

@@ -59,14 +59,15 @@ func TestCreateRangeQuery(t *testing.T) {
 	cases := []struct {
 		field     string
 		rangetype RangeType
-		lower     int
-		upper     int
+		lower     int64
+		upper     int64
 		expected  elastic.Query
 	}{
-		{"meh", Both, 0, 10, elastic.NewRangeQuery("meh").Gte(0).Lte(10)},
-		{"meh", LowerOnly, 0, 10, elastic.NewRangeQuery("meh").Gte(0)},
-		{"meh", UpperOnly, 0, 10, elastic.NewRangeQuery("meh").Lte(10)},
-		{"meh", LowerOnly, 0, 1000, elastic.NewRangeQuery("meh").Gte(0)},
+		{"meh", Both, 0, 10, elastic.NewRangeQuery("meh").Gte(int64(0)).Lte(int64(10))},
+		{"meh", LowerOnly, 0, 10, elastic.NewRangeQuery("meh").Gte(int64(0))},
+		{"meh", UpperOnly, 0, 10, elastic.NewRangeQuery("meh").Lte(int64(10))},
+		{"meh", LowerOnly, 0, 1000, elastic.NewRangeQuery("meh").Gte(int64(0))},
+		{"meh", Both, -3000000000, 3000000000, elastic.NewRangeQuery("meh").Gte(int64(-3000000000)).Lte(int64(3000000000))},
 	}
 
 	for _, c := range cases {
