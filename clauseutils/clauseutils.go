@@ -4,6 +4,8 @@ package clauseutils
 import (
 	"regexp"
 	"strings"
+
+	"gopkg.in/olivere/elastic.v5"
 )
 
 // AddImplicitWildcard takes a query string with OR operators and adds wildcards around each piece separated by OR, unless the query already has wildcard-y syntax
@@ -34,4 +36,28 @@ func AddImplicitUsernameWildcard(input string) string {
 		return input
 	}
 	return input + "#*"
+}
+
+// RangeType specifies what sort of range to create for CreateRangeQuery
+type RangeType int
+
+const (
+	// Both means add both lte and gte
+	Both RangeType = iota
+	// UpperOnly adds only lte
+	UpperOnly
+	// LowerOnly adds only gte
+	LowerOnly
+)
+
+// CreateRangeQuery creates a simple range query for a field, and integer lower/upper limits, plus a RangeType to specify behavior
+func CreateRangeQuery(field string, rangetype RangeType, lower int, upper int) elastic.Query {
+	rq := elastic.NewRangeQuery(field)
+	if rangetype == Both || rangetype == UpperOnly {
+		rq.Lte(upper)
+	}
+	if rangetype == Both || rangetype == LowerOnly {
+		rq.Gte(lower)
+	}
+	return rq
 }
