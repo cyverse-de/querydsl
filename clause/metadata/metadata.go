@@ -105,8 +105,8 @@ func MetadataProcessor(_ context.Context, args map[string]interface{}) (elastic.
 		finalq.Should(makeNested(attr, value, unit))
 	}
 	if includeCyverse {
-		finalq.Should(elastic.NewHasChildQuery("file_metadata", makeNested(attr, value, unit)).ScoreMode("max"))
-		finalq.Should(elastic.NewHasChildQuery("folder_metadata", makeNested(attr, value, unit)).ScoreMode("max"))
+		finalq.Should(elastic.NewHasChildQuery("file_metadata", makeNested(attr, value, unit)).ScoreMode("max").InnerHit(elastic.NewInnerHit()))
+		finalq.Should(elastic.NewHasChildQuery("folder_metadata", makeNested(attr, value, unit)).ScoreMode("max").InnerHit(elastic.NewInnerHit()))
 	}
 
 	return finalq, nil
