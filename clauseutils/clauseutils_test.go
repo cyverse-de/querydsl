@@ -55,6 +55,32 @@ func TestAddImplicitUsernameWildcard(t *testing.T) {
 	}
 }
 
+func TestDateToEpochMs(t *testing.T) {
+	cases := []struct {
+		input          string
+		expectedOutput int64
+		shouldErr      bool
+	}{
+		{"12345", 12345, false},
+		{"2018-10-24T05:05:05.888-07:00", 1540382705888, false},
+		{"not-a-date", 0, true},
+		{"9223372036854775808", 0, true}, // bigger than int64
+	}
+
+	for _, c := range cases {
+		t.Run(c.input, func(t *testing.T) {
+			val, err := DateToEpochMs(c.input)
+			if c.shouldErr && err == nil {
+				t.Errorf("DateToEpochMs should have failed, instead returned %d", val)
+			} else if !c.shouldErr && err != nil {
+				t.Errorf("DateToEpochMs failed with error: %q", err)
+			} else if !c.shouldErr && val != c.expectedOutput {
+				t.Errorf("DateToEpochMs returned %d instead of expected %d", val, c.expectedOutput)
+			}
+		})
+	}
+}
+
 func TestCreateRangeQuery(t *testing.T) {
 	cases := []struct {
 		field     string

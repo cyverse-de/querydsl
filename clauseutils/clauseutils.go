@@ -3,7 +3,9 @@ package clauseutils
 
 import (
 	"regexp"
+	"strconv"
 	"strings"
+	"time"
 
 	"gopkg.in/olivere/elastic.v5"
 )
@@ -36,6 +38,20 @@ func AddImplicitUsernameWildcard(input string) string {
 		return input
 	}
 	return input + "#*"
+}
+
+// DateToEpochMs converts a string date to milliseconds since epoch. Expects either string-wrapped number of milliseconds or YYYY-MM-DDTHH:MM:SS.mssTZ format.
+func DateToEpochMs(date string) (int64, error) {
+	if ms, err := strconv.ParseInt(date, 10, 64); err == nil {
+		return ms, nil
+	}
+
+	t, err := time.Parse("2006-01-02T15:04:05.000Z07:00", date)
+	if err != nil {
+		return 0, err
+	}
+
+	return t.UnixNano() / 1000000, nil
 }
 
 // RangeType specifies what sort of range to create for CreateRangeQuery
