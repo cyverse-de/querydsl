@@ -15,6 +15,7 @@ import (
 	"github.com/cyverse-de/querydsl/clause/owner"
 	"github.com/cyverse-de/querydsl/clause/path"
 	"github.com/cyverse-de/querydsl/clause/permissions"
+	"github.com/cyverse-de/querydsl/clause/size"
 	"github.com/cyverse-de/querydsl/clause/tag"
 )
 
@@ -43,6 +44,7 @@ func main() {
 	tag.Register(qd)
 	created.Register(qd)
 	modified.Register(qd)
+	size.Register(qd)
 
 	err := printDocumentation(qd)
 	if err != nil {
@@ -51,7 +53,7 @@ func main() {
 	}
 
 	var jsonBlob = []byte(`{
-		"all": [{"type": "path", "args": {"prefix": "/iplant/home"}}, {"type": "label", "args": {"label": "PDAP.fel.tree"}}, {"type": "permissions", "args": {"users": ["mian", "ipctest#iplant", "foo#bar", "baz"], "permission": "write"}}],
+		"all": [{"type": "path", "args": {"prefix": "/iplant/home"}}, {"type": "label", "args": {"label": "PDAP.fel.tree"}}, {"type": "permissions", "args": {"users": ["mian", "ipctest#iplant", "foo#bar", "baz"], "permission": "write"}}, {"type": "size", "args": {"from": "1KB", "to": "  4.8 GB  "}}],
 		"any": [{"type": "owner", "args": {"owner": "ipctest"}},{"type": "metadata", "args": {"attribute": "foo", "value": "bar", "attribute_exact": true}},{"type": "metadata", "args": {"attribute": "foo", "value": "bar", "attribute_exact": true, "value_exact": true, "metadata_types": ["irods"]}}, {"type": "tag", "args": {"tags": ["dummy-tag-value"]}}, {"type": "created", "args": {"from": "2017-09-23T00:00:00.000Z"}}, {"type": "modified", "args": {"to": "2017-09-23T00:00:00.000-07:00"}}],
 		"none": [{"type": "permissions", "args": {"permission": "read", "users": ["mian#iplant", "ipctest#iplant"]}}]
 	}`)
