@@ -81,6 +81,35 @@ func TestDateToEpochMs(t *testing.T) {
 	}
 }
 
+func TestStringToFilesize(t *testing.T) {
+	cases := []struct {
+		input          string
+		expectedOutput int64
+		shouldErr      bool
+	}{
+		{"12345", 12345, false},
+		{"1 KB", 1024, false},
+		{"1 MB", 1048576, false},
+		{"1 GB", 1073741824, false},
+		{"1 TB", 1099511627776, false},
+		{"4.5 GB", 4831838208, false},
+		{"not-a-filesize", 0, true},
+		{"9223372036854775808", 0, true}, // bigger than int64
+	}
+
+	for _, c := range cases {
+		t.Run(c.input, func(t *testing.T) {
+			val, err := StringToFilesize(c.input)
+			if c.shouldErr && err == nil {
+				t.Errorf("StringToFilesize should have failed, instead returned %d", val)
+			} else if !c.shouldErr && err != nil {
+				t.Errorf("StringToFilesize failed with error: %q", err)
+			} else if !c.shouldErr && val != c.expectedOutput {
+				t.Errorf("StringToFilesize returned %d instead of expected %d", val, c.expectedOutput)
+			}
+		})
+	}
+}
 func TestCreateRangeQuery(t *testing.T) {
 	cases := []struct {
 		field     string
