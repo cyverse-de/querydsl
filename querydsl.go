@@ -106,9 +106,9 @@ func (q *Query) Translate(ctx context.Context, qd *QueryDSL) (elastic.Query, err
 	baseQuery := elastic.NewBoolQuery()
 
 	// Result channels
-	allChan := make(chan elastic.Query, 10)
-	anyChan := make(chan elastic.Query, 10)
-	noneChan := make(chan elastic.Query, 10)
+	allChan := make(chan elastic.Query)
+	anyChan := make(chan elastic.Query)
+	noneChan := make(chan elastic.Query)
 
 	// subpartswg tracks whether all three of the other waitgroups have completed
 	var subpartswg sync.WaitGroup
