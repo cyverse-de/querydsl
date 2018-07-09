@@ -82,12 +82,14 @@ func PermissionsProcessor(_ context.Context, args map[string]interface{}) (elast
 		if len(shoulds) == 0 {
 			innerquery.Must(termsq)
 		} else {
+			innerquery.MinimumNumberShouldMatch(1)
 			innerquery.Should(termsq)
 		}
 	}
 	if len(shoulds) == 1 && len(terms) == 0 {
 		innerquery.Must(shoulds...)
 	} else if len(shoulds) > 0 {
+		innerquery.MinimumNumberShouldMatch(1)
 		innerquery.Should(shoulds...)
 	}
 
