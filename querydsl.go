@@ -103,7 +103,7 @@ func launchClauseTranslators(ctx context.Context, qd *QueryDSL, clauses []*Gener
 
 // Translate turns a Query into an elastic.Query by way of translating everything contained within
 func (q *Query) Translate(ctx context.Context, qd *QueryDSL) (elastic.Query, error) {
-	baseQuery := elastic.NewBoolQuery().MinimumNumberShouldMatch(1)
+	baseQuery := elastic.NewBoolQuery()
 
 	// Result channels
 	allChan := make(chan elastic.Query)
@@ -131,7 +131,7 @@ func (q *Query) Translate(ctx context.Context, qd *QueryDSL) (elastic.Query, err
 		case query := <-allChan:
 			baseQuery.Must(query)
 		case query := <-anyChan:
-			baseQuery.Should(query)
+			baseQuery.Should(query).MinimumNumberShouldMatch(1)
 		case query := <-noneChan:
 			baseQuery.MustNot(query)
 		case err := <-errChan:
