@@ -49,6 +49,27 @@ func addTestingClauseType() (*QueryDSL, Clause) {
 	return qd, Clause{Type: "foo"}
 }
 
+func TestSummarize(t *testing.T) {
+	cases := []struct {
+		clause   GenericClause
+		expected string
+	}{
+		{GenericClause{}, "0 clauses and 0 queries"},
+		{GenericClause{Clause: &Clause{Type: "arbitrary"}}, "1 clauses and 0 queries"},
+		{GenericClause{Query: &Query{All: []*GenericClause{&GenericClause{Clause: &Clause{Type: "arbitrary"}}}}}, "1 clauses and 1 queries"},
+		{GenericClause{Query: &Query{All: []*GenericClause{&GenericClause{Clause: &Clause{Type: "arbitrary"}}}, Any: []*GenericClause{&GenericClause{Clause: &Clause{Type: "arbitrary"}}}}}, "2 clauses and 1 queries"},
+	}
+
+	for _, c := range cases {
+		t.Run(fmt.Sprintf("%s", c.expected), func(t *testing.T) {
+			summary := c.clause.Summarize()
+			if summary != c.expected {
+				t.Errorf("Got '%s' from summarize, not '%s'", summary, c.expected)
+			}
+		})
+	}
+}
+
 func TestTranslateClauseNoTypes(t *testing.T) {
 	clause := Clause{Type: "type-that-doesnt-exist"}
 

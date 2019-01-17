@@ -60,6 +60,40 @@ func (c *GenericClause) Translate(ctx context.Context, qd *QueryDSL) (elastic.Qu
 	}
 }
 
+// Summarize provides a textual summary of a query
+func (c *GenericClause) Summarize() string {
+	clauses, queries := c.getSummaryCounts()
+
+	return fmt.Sprintf("%d clauses and %d queries", clauses, queries)
+}
+
+func (c *GenericClause) getSummaryCounts() (int, int) {
+	if c.IsClause() {
+		return 1, 0
+	}
+	if c.IsQuery() {
+		var queries = 1
+		var clauses = 0
+		for _, clause := range c.All {
+			ic, iq := clause.getSummaryCounts()
+			clauses = clauses + ic
+			queries = queries + iq
+		}
+		for _, clause := range c.Any {
+			ic, iq := clause.getSummaryCounts()
+			clauses = clauses + ic
+			queries = queries + iq
+		}
+		for _, clause := range c.None {
+			ic, iq := clause.getSummaryCounts()
+			clauses = clauses + ic
+			queries = queries + iq
+		}
+		return clauses, queries
+	}
+	return 0, 0
+}
+
 // Translate turns a regular Clause into an elastic.Query
 func (c *Clause) Translate(ctx context.Context, qd *QueryDSL) (elastic.Query, error) {
 	clauseProcessors := qd.GetProcessors()
