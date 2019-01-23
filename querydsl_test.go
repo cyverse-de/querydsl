@@ -42,27 +42,51 @@ func TestIsQuery_IsClause(t *testing.T) {
 
 func addTestingClauseType() (*QueryDSL, Clause) {
 	qd := New()
-	qd.AddClauseType("foo", func(_ context.Context, args map[string]interface{}) (elastic.Query, error) {
+	qd.AddClauseTypeSummarized("foo", func(_ context.Context, args map[string]interface{}) (elastic.Query, error) {
 		return elastic.NewTermQuery("user", "arbitrary"), nil
-	}, clause.ClauseDocumentation{})
+	}, clause.ClauseDocumentation{}, func(_ context.Context, args map[string]interface{}) (string, error) {
+		return fmt.Sprintf("foo:%+v", args), nil
+	})
 
 	return qd, Clause{Type: "foo"}
 }
 
-func TestSummarize(t *testing.T) {
+func TestSummarizeNoTypes(t *testing.T) {
 	cases := []struct {
 		clause   GenericClause
 		expected string
 	}{
-		{GenericClause{}, "0 clauses and 0 queries"},
-		{GenericClause{Clause: &Clause{Type: "arbitrary"}}, "1 clauses and 0 queries"},
-		{GenericClause{Query: &Query{All: []*GenericClause{&GenericClause{Clause: &Clause{Type: "arbitrary"}}}}}, "1 clauses and 1 queries"},
-		{GenericClause{Query: &Query{All: []*GenericClause{&GenericClause{Clause: &Clause{Type: "arbitrary"}}}, Any: []*GenericClause{&GenericClause{Clause: &Clause{Type: "arbitrary"}}}}}, "2 clauses and 1 queries"},
+		{GenericClause{}, "GenericClause &{Clause:<nil> Query:<nil>} is neither a properly-formatted Query nor a Clause"},
+		{GenericClause{Clause: &Clause{Type: "arbitrary"}}, "{clause:arbitrary}"},
+		{GenericClause{Query: &Query{All: []*GenericClause{&GenericClause{Clause: &Clause{Type: "arbitrary"}}}}}, "All:[{clause:arbitrary}]"},
+		{GenericClause{Query: &Query{All: []*GenericClause{&GenericClause{Clause: &Clause{Type: "arbitrary"}}}, Any: []*GenericClause{&GenericClause{Clause: &Clause{Type: "arbitrary"}}}}}, "All:[{clause:arbitrary}] Any:[{clause:arbitrary}]"},
 	}
 
 	for _, c := range cases {
 		t.Run(fmt.Sprintf("%s", c.expected), func(t *testing.T) {
-			summary := c.clause.Summarize()
+			summary := c.clause.Summarize(context.Background(), New())
+			if summary != c.expected {
+				t.Errorf("Got '%s' from summarize, not '%s'", summary, c.expected)
+			}
+		})
+	}
+}
+
+func TestSummarize(t *testing.T) {
+	qd, clause := addTestingClauseType()
+	cases := []struct {
+		clause   GenericClause
+		expected string
+	}{
+		{GenericClause{}, "GenericClause &{Clause:<nil> Query:<nil>} is neither a properly-formatted Query nor a Clause"},
+		{GenericClause{Clause: &clause}, "foo:map[]"},
+		{GenericClause{Query: &Query{All: []*GenericClause{&GenericClause{Clause: &clause}}}}, "All:[foo:map[]]"},
+		{GenericClause{Query: &Query{All: []*GenericClause{&GenericClause{Clause: &Clause{Type: "arbitrary"}}}, Any: []*GenericClause{&GenericClause{Clause: &clause}}}}, "All:[{clause:arbitrary}] Any:[foo:map[]]"},
+	}
+
+	for _, c := range cases {
+		t.Run(fmt.Sprintf("%s", c.expected), func(t *testing.T) {
+			summary := c.clause.Summarize(context.Background(), qd)
 			if summary != c.expected {
 				t.Errorf("Got '%s' from summarize, not '%s'", summary, c.expected)
 			}

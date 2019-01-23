@@ -4,6 +4,7 @@ package querydsl
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/cyverse-de/querydsl/clause"
@@ -14,6 +15,7 @@ import (
 type QueryDSL struct {
 	clauseProcessors    map[clause.ClauseType]clause.ClauseProcessor
 	clauseDocumentation map[clause.ClauseType]clause.ClauseDocumentation
+	clauseSummarizers   map[clause.ClauseType]clause.ClauseSummarizer
 }
 
 // Query represents a boolean query
@@ -46,6 +48,68 @@ func (c *GenericClause) IsClause() bool {
 	return c.Clause != nil && len(c.Type) > 0
 }
 
+/// SUMMARIZING QUERIES
+
+// Summarize provides a textual summary of a query
+func (c *GenericClause) Summarize(ctx context.Context, qd *QueryDSL) string {
+	if c.IsQuery() {
+		query := Query{All: c.All, Any: c.Any, None: c.None}
+		return query.Summarize(ctx, qd)
+	} else if c.IsClause() {
+		clause := Clause{Type: c.Type, Args: c.Args}
+		return clause.Summarize(ctx, qd)
+	} else {
+		return fmt.Sprintf("GenericClause %+v is neither a properly-formatted Query nor a Clause", c)
+	}
+}
+
+// Summarize provides a textual summary of a Clause
+func (c *Clause) Summarize(ctx context.Context, qd *QueryDSL) string {
+	clauseSummarizers := qd.GetSummarizers()
+	if summarizer, exists := clauseSummarizers[c.Type]; exists {
+		summary, err := summarizer(ctx, c.Args)
+		if err != nil {
+			return fmt.Sprintf("{ERR:%s}", err)
+		}
+		return summary
+	}
+	return fmt.Sprintf("{clause:%s}", c.Type)
+}
+
+// Summarize provides a textual summary of a Query
+func (q *Query) Summarize(ctx context.Context, qd *QueryDSL) string {
+	hasAll := len(q.All) > 0
+	hasAny := len(q.Any) > 0
+	hasNone := len(q.None) > 0
+
+	var all, any, none string
+	if hasAll {
+		alls := make([]string, len(q.All))
+		for i, c := range q.All {
+			alls[i] = c.Summarize(ctx, qd)
+		}
+		all = fmt.Sprintf("All:%s", fmt.Sprintf("[%s]", strings.Join(alls, ",")))
+	}
+	if hasAny {
+		anys := make([]string, len(q.Any))
+		for i, c := range q.Any {
+			anys[i] = c.Summarize(ctx, qd)
+		}
+		any = fmt.Sprintf("Any:%s", fmt.Sprintf("[%s]", strings.Join(anys, ",")))
+	}
+	if hasNone {
+		nones := make([]string, len(q.None))
+		for i, c := range q.None {
+			nones[i] = c.Summarize(ctx, qd)
+		}
+		none = fmt.Sprintf("None:%s", fmt.Sprintf("[%s]", strings.Join(nones, ",")))
+	}
+
+	return strings.TrimSpace(strings.Join([]string{all, any, none}, " "))
+}
+
+/// TRANSLATING QUERIES
+
 // Translate turns a GenericClause into an elastic.Query
 func (c *GenericClause) Translate(ctx context.Context, qd *QueryDSL) (elastic.Query, error) {
 	if c.IsQuery() {
@@ -58,40 +122,6 @@ func (c *GenericClause) Translate(ctx context.Context, qd *QueryDSL) (elastic.Qu
 	} else {
 		return nil, fmt.Errorf("GenericClause %+v is neither a properly-formatted Query nor a Clause", c)
 	}
-}
-
-// Summarize provides a textual summary of a query
-func (c *GenericClause) Summarize() string {
-	clauses, queries := c.getSummaryCounts()
-
-	return fmt.Sprintf("%d clauses and %d queries", clauses, queries)
-}
-
-func (c *GenericClause) getSummaryCounts() (int, int) {
-	if c.IsClause() {
-		return 1, 0
-	}
-	if c.IsQuery() {
-		var queries = 1
-		var clauses = 0
-		for _, clause := range c.All {
-			ic, iq := clause.getSummaryCounts()
-			clauses = clauses + ic
-			queries = queries + iq
-		}
-		for _, clause := range c.Any {
-			ic, iq := clause.getSummaryCounts()
-			clauses = clauses + ic
-			queries = queries + iq
-		}
-		for _, clause := range c.None {
-			ic, iq := clause.getSummaryCounts()
-			clauses = clauses + ic
-			queries = queries + iq
-		}
-		return clauses, queries
-	}
-	return 0, 0
 }
 
 // Translate turns a regular Clause into an elastic.Query
@@ -181,7 +211,8 @@ func (q *Query) Translate(ctx context.Context, qd *QueryDSL) (elastic.Query, err
 func New() *QueryDSL {
 	processors := make(map[clause.ClauseType]clause.ClauseProcessor)
 	documentation := make(map[clause.ClauseType]clause.ClauseDocumentation)
-	return &QueryDSL{clauseProcessors: processors, clauseDocumentation: documentation}
+	summarizers := make(map[clause.ClauseType]clause.ClauseSummarizer)
+	return &QueryDSL{clauseProcessors: processors, clauseDocumentation: documentation, clauseSummarizers: summarizers}
 }
 
 // AddClauseType takes a string (as clause.ClauseType), a function to process,
@@ -192,6 +223,12 @@ func (qd *QueryDSL) AddClauseType(clausetype clause.ClauseType, processor clause
 	qd.clauseDocumentation[clausetype] = documentation
 }
 
+// AddSummarizedClauseType is AddClauseType plus an extra argument for a clause summary function
+func (qd *QueryDSL) AddClauseTypeSummarized(clausetype clause.ClauseType, processor clause.ClauseProcessor, documentation clause.ClauseDocumentation, summarizer clause.ClauseSummarizer) {
+	qd.AddClauseType(clausetype, processor, documentation)
+	qd.clauseSummarizers[clausetype] = summarizer
+}
+
 // GetProcessors returns all the clause processors registered to a QueryDSL
 func (qd *QueryDSL) GetProcessors() map[clause.ClauseType]clause.ClauseProcessor {
 	return qd.clauseProcessors
@@ -200,4 +237,9 @@ func (qd *QueryDSL) GetProcessors() map[clause.ClauseType]clause.ClauseProcessor
 // GetDocumentation returns documentation (if present) for all the clause processors registered to a QueryDSL
 func (qd *QueryDSL) GetDocumentation() map[clause.ClauseType]clause.ClauseDocumentation {
 	return qd.clauseDocumentation
+}
+
+// GetSummarizers returns documentation (if present) for all the clause processors registered to a QueryDSL
+func (qd *QueryDSL) GetSummarizers() map[clause.ClauseType]clause.ClauseSummarizer {
+	return qd.clauseSummarizers
 }

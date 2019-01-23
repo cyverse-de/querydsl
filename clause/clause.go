@@ -12,6 +12,9 @@ type ClauseType string
 // ClauseProcessor is a function taking a context and arguments for a given clause type and producing a Query
 type ClauseProcessor func(ctx context.Context, args map[string]interface{}) (elastic.Query, error)
 
+// ClauseSummarizer is a function taking a context and arguments for a given clause type and producing a summary string
+type ClauseSummarizer func(ctx context.Context, args map[string]interface{}) (string, error)
+
 // ClauseArgumentDocumentation describes a single argument for a clause. The 'type' should look like a golang type, though this is not checked.
 type ClauseArgumentDocumentation struct {
 	Type    string `json:"type"`

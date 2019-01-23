@@ -3,6 +3,7 @@ package label
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/cyverse-de/querydsl"
 	"github.com/cyverse-de/querydsl/clause"
@@ -51,6 +52,23 @@ func LabelProcessor(_ context.Context, args map[string]interface{}) (elastic.Que
 	return query, nil
 }
 
+func LabelSummary(_ context.Context, args map[string]interface{}) (string, error) {
+	var realArgs LabelArgs
+	err := mapstructure.Decode(args, &realArgs)
+	if err != nil {
+		return "", err
+	}
+
+	if realArgs.Label == "" {
+		return "", errors.New("No label was passed, cannot create clause.")
+	}
+
+	if realArgs.Exact {
+		return fmt.Sprintf("label=\"%s\"", realArgs.Label), nil
+	}
+	return fmt.Sprintf("label~\"%s\"", realArgs.Label), nil
+}
+
 func Register(qd *querydsl.QueryDSL) {
-	qd.AddClauseType(typeKey, LabelProcessor, documentation)
+	qd.AddClauseTypeSummarized(typeKey, LabelProcessor, documentation, LabelSummary)
 }
