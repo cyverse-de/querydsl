@@ -19,8 +19,8 @@ var (
 	documentation = clause.ClauseDocumentation{
 		Summary: "Searches based on an object's creation date",
 		Args: map[string]clause.ClauseArgumentDocumentation{
-			"from": {Type: "string", Summary: "The start date for the range (inclusive). Pass as a string, milliseconds since epoch or in YYYY-MM-DDTHH:MM:SS.mss<TZ> format, where TZ can either be 'Z' or an offset in ±hh:mm format."},
-			"to":   {Type: "string", Summary: "The end date for the range (inclusive). Pass as a string, milliseconds since epoch or in YYYY-MM-DDTHH:MM:SS.mss<TZ> format, where TZ can either be 'Z' or an offset in ±hh:mm format."},
+			"from": {Type: "string", Summary: "The start date for the range (inclusive). Pass as a string, milliseconds since epoch or in YYYY-MM-DDTHH:MM:SS.mss<TZ> format, where TZ can either be 'Z' or an offset in ±hh:mm format, or YYYY-MM-DD which assumes UTC and 0 values for all other fields."},
+			"to":   {Type: "string", Summary: "The end date for the range (inclusive). Pass as a string, milliseconds since epoch or in YYYY-MM-DDTHH:MM:SS.mss<TZ> format, where TZ can either be 'Z' or an offset in ±hh:mm format, or YYYY-MM-DD which assumes UTC and 0 values for all other fields."},
 		},
 	}
 )

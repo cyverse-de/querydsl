@@ -44,11 +44,18 @@ func AddImplicitUsernameWildcard(input string) string {
 
 // DateToEpochMs converts a string date to milliseconds since epoch. Expects either string-wrapped number of milliseconds or YYYY-MM-DDTHH:MM:SS.mssTZ format.
 func DateToEpochMs(date string) (int64, error) {
+	var err error
 	if ms, err := strconv.ParseInt(date, 10, 64); err == nil {
 		return ms, nil
 	}
 
-	t, err := time.Parse("2006-01-02T15:04:05.000Z07:00", date)
+	var t time.Time
+
+	if len(date) == 10 {
+		t, err = time.Parse("2006-01-02", date)
+	} else {
+		t, err = time.Parse("2006-01-02T15:04:05.000Z07:00", date)
+	}
 	if err != nil {
 		return 0, err
 	}
