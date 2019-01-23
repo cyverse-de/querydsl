@@ -3,6 +3,7 @@ package path
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/cyverse-de/querydsl"
 	"github.com/cyverse-de/querydsl/clause"
@@ -42,6 +43,20 @@ func PathProcessor(_ context.Context, args map[string]interface{}) (elastic.Quer
 	return query, nil
 }
 
+func PathSummary(_ context.Context, args map[string]interface{}) (string, error) {
+	var realArgs PathArgs
+	err := mapstructure.Decode(args, &realArgs)
+	if err != nil {
+		return "", err
+	}
+
+	if realArgs.Prefix == "" {
+		return "", errors.New("No prefix was passed, cannot create clause.")
+	}
+
+	return fmt.Sprintf("path=\"%s\"", realArgs.Prefix), nil
+}
+
 func Register(qd *querydsl.QueryDSL) {
-	qd.AddClauseType(typeKey, PathProcessor, documentation)
+	qd.AddClauseTypeSummarized(typeKey, PathProcessor, documentation, PathSummary)
 }
