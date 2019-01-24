@@ -67,6 +67,20 @@ func SizeProcessor(_ context.Context, args map[string]interface{}) (elastic.Quer
 	return clauseutils.CreateRangeQuery("fileSize", rangetype, from, to), nil
 }
 
+func SizeSummary(_ context.Context, args map[string]interface{}) (string, error) {
+	var realArgs SizeArgs
+	err := mapstructure.Decode(args, &realArgs)
+	if err != nil {
+		return "", err
+	}
+
+	if realArgs.From == "" && realArgs.To == "" {
+		return "", errors.New("Neither from nor to was passed, cannot create clause.")
+	}
+
+	return fmt.Sprintf("size=%s--%s", realArgs.From, realArgs.To), nil
+}
+
 func Register(qd *querydsl.QueryDSL) {
-	qd.AddClauseType(typeKey, SizeProcessor, documentation)
+	qd.AddClauseTypeSummarized(typeKey, SizeProcessor, documentation, SizeSummary)
 }

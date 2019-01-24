@@ -3,6 +3,7 @@ package modified
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/cyverse-de/querydsl"
 	"github.com/cyverse-de/querydsl/clause"
@@ -67,6 +68,20 @@ func ModifiedProcessor(_ context.Context, args map[string]interface{}) (elastic.
 	return clauseutils.CreateRangeQuery("dateModified", rangetype, from, to), nil
 }
 
+func ModifiedSummary(_ context.Context, args map[string]interface{}) (string, error) {
+	var realArgs ModifiedArgs
+	err := mapstructure.Decode(args, &realArgs)
+	if err != nil {
+		return "", err
+	}
+
+	if realArgs.From == "" && realArgs.To == "" {
+		return "", errors.New("Neither from nor to was passed, cannot create clause.")
+	}
+
+	return fmt.Sprintf("modified=%s--%s", realArgs.From, realArgs.To), nil
+}
+
 func Register(qd *querydsl.QueryDSL) {
-	qd.AddClauseType(typeKey, ModifiedProcessor, documentation)
+	qd.AddClauseTypeSummarized(typeKey, ModifiedProcessor, documentation, ModifiedSummary)
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/cyverse-de/querydsl"
 	"github.com/cyverse-de/querydsl/clause"
@@ -112,6 +113,44 @@ func MetadataProcessor(_ context.Context, args map[string]interface{}) (elastic.
 	return finalq, nil
 }
 
+func MetadataSummary(_ context.Context, args map[string]interface{}) (string, error) {
+	var realArgs MetadataArgs
+	err := mapstructure.Decode(args, &realArgs)
+	if err != nil {
+		return "", err
+	}
+
+	if realArgs.Attribute == "" && realArgs.Value == "" && realArgs.Unit == "" {
+		return "", errors.New("Must provide at least one of attribute, value, or unit")
+	}
+
+	var a, v, u string
+	if realArgs.Attribute != "" {
+		if realArgs.AttributeExact {
+			a = fmt.Sprintf("attr=\"%s\"", realArgs.Attribute)
+		} else {
+			a = fmt.Sprintf("attr~\"%s\"", realArgs.Attribute)
+		}
+	}
+	if realArgs.Value != "" {
+		if realArgs.ValueExact {
+			v = fmt.Sprintf("value=\"%s\"", realArgs.Value)
+		} else {
+			v = fmt.Sprintf("value~\"%s\"", realArgs.Value)
+		}
+	}
+	if realArgs.Unit != "" {
+		if realArgs.UnitExact {
+			u = fmt.Sprintf("unit=\"%s\"", realArgs.Unit)
+		} else {
+			u = fmt.Sprintf("unit~\"%s\"", realArgs.Unit)
+		}
+	}
+	avu := strings.Join([]string{a, v, u}, ",")
+	types := strings.Join(realArgs.MetadataTypes, ",")
+	return fmt.Sprintf("metadata=(%s)(%s)", avu, types), nil
+}
+
 func Register(qd *querydsl.QueryDSL) {
-	qd.AddClauseType(typeKey, MetadataProcessor, documentation)
+	qd.AddClauseTypeSummarized(typeKey, MetadataProcessor, documentation, MetadataSummary)
 }
