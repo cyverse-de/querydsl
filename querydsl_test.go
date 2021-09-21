@@ -63,7 +63,7 @@ func TestSummarizeNoTypes(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		t.Run(fmt.Sprintf("%s", c.expected), func(t *testing.T) {
+		t.Run(c.expected, func(t *testing.T) {
 			summary := c.clause.Summarize(context.Background(), New())
 			if summary != c.expected {
 				t.Errorf("Got '%s' from summarize, not '%s'", summary, c.expected)
@@ -85,7 +85,7 @@ func TestSummarize(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		t.Run(fmt.Sprintf("%s", c.expected), func(t *testing.T) {
+		t.Run(c.expected, func(t *testing.T) {
 			summary := c.clause.Summarize(context.Background(), qd)
 			if summary != c.expected {
 				t.Errorf("Got '%s' from summarize, not '%s'", summary, c.expected)

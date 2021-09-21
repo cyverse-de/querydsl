@@ -14,8 +14,6 @@ type permissionTestCase struct {
 	expectedTerms     []string
 	expectedWildcards []string
 	shouldErr         bool
-
-	expectedQuery string
 }
 
 func makeSSet(a []string) map[string]bool {
@@ -137,9 +135,9 @@ func TestPermissionsProcessor(t *testing.T) {
 		{users: []string{"ipctest", "mian"}, permission: "own", expectedWildcards: []string{"mian#*", "ipctest#*"}},
 		{users: []string{"mian"}, shouldErr: true},                      // no permission
 		{users: []string{"mian"}, permission: "wrong", shouldErr: true}, // bad permission
-		{shouldErr: true},                                               // empty owner
-		{users: []int{666}, shouldErr: true},                            // bad type
-		{users: 444, shouldErr: true},                                   // bad type
+		{shouldErr: true},                    // empty owner
+		{users: []int{666}, shouldErr: true}, // bad type
+		{users: 444, shouldErr: true},        // bad type
 	}
 
 	for _, c := range cases {
@@ -223,14 +221,14 @@ func TestPermissionsProcessor(t *testing.T) {
 
 				if !mustShouldBeArray && mustShouldExist {
 					mustQueryArray = []interface{}{
-						mustQuery.(interface{}),
+						mustQuery.(interface{}), // nolint:gosimple
 					}
 				}
 
 				hasPerm := false // also set to true if one is not expected
 				hasUserTerms := false
 				hasWildcard := false
-				foundWildcards := make([]string, 0, 0)
+				foundWildcards := make([]string, 0)
 
 				if !hasPermissionClause {
 					// no permission clause needs to be present if none should be present
