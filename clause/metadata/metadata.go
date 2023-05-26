@@ -42,7 +42,7 @@ type MetadataArgs struct {
 	UnitExact      bool     `mapstructure:"unit_exact"`
 }
 
-func makeNested(attr string, value string, unit string) elastic.Query {
+func makeNested(suffix, attr, value, unit string) elastic.Query {
 	inner := elastic.NewBoolQuery()
 	if attr != "" {
 		inner.Must(elastic.NewQueryStringQuery(attr).Field("metadata.attribute"))
@@ -53,7 +53,7 @@ func makeNested(attr string, value string, unit string) elastic.Query {
 	if unit != "" {
 		inner.Must(elastic.NewQueryStringQuery(unit).Field("metadata.unit"))
 	}
-	return elastic.NewNestedQuery("metadata", inner)
+	return elastic.NewNestedQuery(fmt.Sprintf("metadata.%s", suffix), inner)
 }
 
 func MetadataProcessor(_ context.Context, args map[string]interface{}) (elastic.Query, error) {
@@ -103,11 +103,10 @@ func MetadataProcessor(_ context.Context, args map[string]interface{}) (elastic.
 	}
 
 	if includeIrods {
-		finalq.Should(makeNested(attr, value, unit))
+		finalq.Should(makeNested("irods", attr, value, unit))
 	}
 	if includeCyverse {
-		finalq.Should(elastic.NewHasChildQuery("file_metadata", makeNested(attr, value, unit)).ScoreMode("max").InnerHit(elastic.NewInnerHit()))
-		finalq.Should(elastic.NewHasChildQuery("folder_metadata", makeNested(attr, value, unit)).ScoreMode("max").InnerHit(elastic.NewInnerHit()))
+		finalq.Should(makeNested("cyverse", attr, value, unit))
 	}
 
 	return finalq, nil
