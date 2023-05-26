@@ -41,7 +41,7 @@ func TagProcessor(_ context.Context, args map[string]interface{}) (elastic.Query
 	query := elastic.NewBoolQuery()
 
 	for _, tag := range realArgs.Tags {
-		termsLookup := elastic.NewTermsLookup().Type("tag").Id(tag).Path("targets.id")
+		termsLookup := elastic.NewTermsLookup().Id(tag).Path("targets.id")
 		query.Should(elastic.NewTermsQuery("id").TermsLookup(termsLookup))
 	}
 
