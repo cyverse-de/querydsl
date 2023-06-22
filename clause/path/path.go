@@ -8,7 +8,7 @@ import (
 	"github.com/cyverse-de/querydsl"
 	"github.com/cyverse-de/querydsl/clause"
 	"github.com/mitchellh/mapstructure"
-	"gopkg.in/olivere/elastic.v5"
+	"github.com/olivere/elastic/v7"
 )
 
 const (

@@ -3,7 +3,7 @@ package clause
 import (
 	"context"
 
-	"gopkg.in/olivere/elastic.v5"
+	"github.com/olivere/elastic/v7"
 )
 
 // ClauseType is an alias for string used as the key for locating processors and documentation
