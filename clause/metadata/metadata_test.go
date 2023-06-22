@@ -63,7 +63,7 @@ func TestNested(t *testing.T) {
 			}
 
 			if decoded.Nested.Path != "metadata.irods" {
-				t.Error("Nested path is not 'metadata'")
+				t.Error("Nested path is not 'metadata.irods'")
 			}
 
 			if c.attribute != "" && c.value != "" {
@@ -78,7 +78,7 @@ func TestNested(t *testing.T) {
 					t.Errorf("Decode failed with error: %q", err)
 				}
 
-				if first.QueryString.Fields[0] != "metadata.attribute" {
+				if first.QueryString.Fields[0] != "metadata.irods.attribute" {
 					t.Error("First nested query had wrong field")
 				}
 
@@ -92,7 +92,7 @@ func TestNested(t *testing.T) {
 					t.Errorf("Decode failed with error: %q", err)
 				}
 
-				if second.QueryString.Fields[0] != "metadata.value" {
+				if second.QueryString.Fields[0] != "metadata.irods.value" {
 					t.Error("Second nested query had wrong field")
 				}
 

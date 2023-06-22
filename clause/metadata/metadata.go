@@ -45,13 +45,13 @@ type MetadataArgs struct {
 func makeNested(suffix, attr, value, unit string) elastic.Query {
 	inner := elastic.NewBoolQuery()
 	if attr != "" {
-		inner.Must(elastic.NewQueryStringQuery(attr).Field("metadata.attribute"))
+		inner.Must(elastic.NewQueryStringQuery(attr).Field(fmt.Sprintf("metadata.%s.attribute", suffix)))
 	}
 	if value != "" {
-		inner.Must(elastic.NewQueryStringQuery(value).Field("metadata.value"))
+		inner.Must(elastic.NewQueryStringQuery(value).Field(fmt.Sprintf("metadata.%s.value", suffix)))
 	}
 	if unit != "" {
-		inner.Must(elastic.NewQueryStringQuery(unit).Field("metadata.unit"))
+		inner.Must(elastic.NewQueryStringQuery(unit).Field(fmt.Sprintf("metadata.%s.unit", suffix)))
 	}
 	return elastic.NewNestedQuery(fmt.Sprintf("metadata.%s", suffix), inner)
 }
