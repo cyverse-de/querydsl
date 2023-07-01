@@ -7,16 +7,16 @@ import (
 	"os"
 	"text/template"
 
-	"github.com/cyverse-de/querydsl"
-	"github.com/cyverse-de/querydsl/clause/created"
-	"github.com/cyverse-de/querydsl/clause/label"
-	"github.com/cyverse-de/querydsl/clause/metadata"
-	"github.com/cyverse-de/querydsl/clause/modified"
-	"github.com/cyverse-de/querydsl/clause/owner"
-	"github.com/cyverse-de/querydsl/clause/path"
-	"github.com/cyverse-de/querydsl/clause/permissions"
-	"github.com/cyverse-de/querydsl/clause/size"
-	"github.com/cyverse-de/querydsl/clause/tag"
+	"github.com/cyverse-de/querydsl/v2"
+	"github.com/cyverse-de/querydsl/v2/clause/created"
+	"github.com/cyverse-de/querydsl/v2/clause/label"
+	"github.com/cyverse-de/querydsl/v2/clause/metadata"
+	"github.com/cyverse-de/querydsl/v2/clause/modified"
+	"github.com/cyverse-de/querydsl/v2/clause/owner"
+	"github.com/cyverse-de/querydsl/v2/clause/path"
+	"github.com/cyverse-de/querydsl/v2/clause/permissions"
+	"github.com/cyverse-de/querydsl/v2/clause/size"
+	"github.com/cyverse-de/querydsl/v2/clause/tag"
 )
 
 func printDocumentation(qd *querydsl.QueryDSL) error {

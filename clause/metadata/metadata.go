@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/cyverse-de/querydsl"
-	"github.com/cyverse-de/querydsl/clause"
-	"github.com/cyverse-de/querydsl/clauseutils"
+	"github.com/cyverse-de/querydsl/v2"
+	"github.com/cyverse-de/querydsl/v2/clause"
+	"github.com/cyverse-de/querydsl/v2/clauseutils"
 	"github.com/mitchellh/mapstructure"
 	"github.com/olivere/elastic/v7"
 )

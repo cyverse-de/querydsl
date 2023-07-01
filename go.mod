@@ -1,4 +1,4 @@
-module github.com/cyverse-de/querydsl
+module github.com/cyverse-de/querydsl/v2
 
 go 1.16
 

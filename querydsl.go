@@ -7,7 +7,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/cyverse-de/querydsl/clause"
+	"github.com/cyverse-de/querydsl/v2/clause"
 	"github.com/olivere/elastic/v7"
 )
 
