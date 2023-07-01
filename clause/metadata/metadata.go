@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/cyverse-de/querydsl"
-	"github.com/cyverse-de/querydsl/clause"
-	"github.com/cyverse-de/querydsl/clauseutils"
+	"github.com/cyverse-de/querydsl/v2"
+	"github.com/cyverse-de/querydsl/v2/clause"
+	"github.com/cyverse-de/querydsl/v2/clauseutils"
 	"github.com/mitchellh/mapstructure"
-	"gopkg.in/olivere/elastic.v5"
+	"github.com/olivere/elastic/v7"
 )
 
 const (
@@ -42,18 +42,18 @@ type MetadataArgs struct {
 	UnitExact      bool     `mapstructure:"unit_exact"`
 }
 
-func makeNested(attr string, value string, unit string) elastic.Query {
+func makeNested(suffix, attr, value, unit string) elastic.Query {
 	inner := elastic.NewBoolQuery()
 	if attr != "" {
-		inner.Must(elastic.NewQueryStringQuery(attr).Field("metadata.attribute"))
+		inner.Must(elastic.NewQueryStringQuery(attr).Field(fmt.Sprintf("metadata.%s.attribute", suffix)))
 	}
 	if value != "" {
-		inner.Must(elastic.NewQueryStringQuery(value).Field("metadata.value"))
+		inner.Must(elastic.NewQueryStringQuery(value).Field(fmt.Sprintf("metadata.%s.value", suffix)))
 	}
 	if unit != "" {
-		inner.Must(elastic.NewQueryStringQuery(unit).Field("metadata.unit"))
+		inner.Must(elastic.NewQueryStringQuery(unit).Field(fmt.Sprintf("metadata.%s.unit", suffix)))
 	}
-	return elastic.NewNestedQuery("metadata", inner)
+	return elastic.NewNestedQuery(fmt.Sprintf("metadata.%s", suffix), inner)
 }
 
 func MetadataProcessor(_ context.Context, args map[string]interface{}) (elastic.Query, error) {
@@ -103,11 +103,10 @@ func MetadataProcessor(_ context.Context, args map[string]interface{}) (elastic.
 	}
 
 	if includeIrods {
-		finalq.Should(makeNested(attr, value, unit))
+		finalq.Should(makeNested("irods", attr, value, unit))
 	}
 	if includeCyverse {
-		finalq.Should(elastic.NewHasChildQuery("file_metadata", makeNested(attr, value, unit)).ScoreMode("max").InnerHit(elastic.NewInnerHit()))
-		finalq.Should(elastic.NewHasChildQuery("folder_metadata", makeNested(attr, value, unit)).ScoreMode("max").InnerHit(elastic.NewInnerHit()))
+		finalq.Should(makeNested("cyverse", attr, value, unit))
 	}
 
 	return finalq, nil

@@ -5,11 +5,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/cyverse-de/querydsl"
-	"github.com/cyverse-de/querydsl/clause"
-	"github.com/cyverse-de/querydsl/clauseutils"
+	"github.com/cyverse-de/querydsl/v2"
+	"github.com/cyverse-de/querydsl/v2/clause"
+	"github.com/cyverse-de/querydsl/v2/clauseutils"
 	"github.com/mitchellh/mapstructure"
-	"gopkg.in/olivere/elastic.v5"
+	"github.com/olivere/elastic/v7"
 )
 
 const (

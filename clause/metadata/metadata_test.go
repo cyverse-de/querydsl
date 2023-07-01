@@ -48,7 +48,7 @@ func TestNested(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(fmt.Sprintf("%+v,%+v,%+v", c.attribute, c.value, c.unit), func(t *testing.T) {
-			v := makeNested(c.attribute, c.value, c.unit)
+			v := makeNested("irods", c.attribute, c.value, c.unit)
 
 			source, err := v.Source()
 			if err != nil {
@@ -62,8 +62,8 @@ func TestNested(t *testing.T) {
 				t.Errorf("Decode failed with error: %q", err)
 			}
 
-			if decoded.Nested.Path != "metadata" {
-				t.Error("Nested path is not 'metadata'")
+			if decoded.Nested.Path != "metadata.irods" {
+				t.Error("Nested path is not 'metadata.irods'")
 			}
 
 			if c.attribute != "" && c.value != "" {
@@ -78,7 +78,7 @@ func TestNested(t *testing.T) {
 					t.Errorf("Decode failed with error: %q", err)
 				}
 
-				if first.QueryString.Fields[0] != "metadata.attribute" {
+				if first.QueryString.Fields[0] != "metadata.irods.attribute" {
 					t.Error("First nested query had wrong field")
 				}
 
@@ -92,7 +92,7 @@ func TestNested(t *testing.T) {
 					t.Errorf("Decode failed with error: %q", err)
 				}
 
-				if second.QueryString.Fields[0] != "metadata.value" {
+				if second.QueryString.Fields[0] != "metadata.irods.value" {
 					t.Error("Second nested query had wrong field")
 				}
 
@@ -187,25 +187,13 @@ func TestMetadataProcessor(t *testing.T) {
 				includeIrods := len(c.metadataTypes) == 0 || len(c.metadataTypes) == 2 || c.metadataTypes[0] == "irods"
 
 				shouldArr, ok := decoded.Bool.Should.([]interface{})
-				if includeCyverse {
-					if !ok {
-						t.Error("'should' was not an array, but should have been")
+				// if both are included, should be length 2; otherwise, should not be an array at all
+				if includeCyverse && includeIrods {
+					if len(shouldArr) != 2 {
+						t.Error("'should' should have two entries")
 					}
-
-					if includeIrods {
-						if len(shouldArr) != 3 {
-							t.Error("'should' should have three entries")
-						}
-					} else {
-						if len(shouldArr) != 2 {
-							t.Error("'should' should have two entries")
-						}
-					}
-				} else if includeIrods {
-					if ok {
-						t.Error("'should' was an array, but should not have been")
-					}
-
+				} else if ok {
+					t.Error("'should' was an array, but should not have been")
 				}
 
 				// If the numbers look right, we'll figure that the query for the nested query creation is doing right due to the tests above.

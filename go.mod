@@ -1,8 +1,8 @@
-module github.com/cyverse-de/querydsl
+module github.com/cyverse-de/querydsl/v2
 
 go 1.16
 
 require (
 	github.com/mitchellh/mapstructure v1.4.2
-	gopkg.in/olivere/elastic.v5 v5.0.86
+	github.com/olivere/elastic/v7 v7.0.12
 )

@@ -7,8 +7,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/cyverse-de/querydsl/clause"
-	"gopkg.in/olivere/elastic.v5"
+	"github.com/cyverse-de/querydsl/v2/clause"
+	"github.com/olivere/elastic/v7"
 )
 
 // QueryDSL represents a collection of processors and their documentation to use for translation

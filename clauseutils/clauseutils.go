@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"gopkg.in/olivere/elastic.v5"
+	"github.com/olivere/elastic/v7"
 )
 
 // AddImplicitWildcard takes a query string with OR operators and adds wildcards around each piece separated by OR, unless the query already has wildcard-y syntax
