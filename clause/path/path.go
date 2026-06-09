@@ -36,7 +36,7 @@ func PathProcessor(_ context.Context, args map[string]interface{}) (elastic.Quer
 	}
 
 	if realArgs.Prefix == "" {
-		return nil, errors.New("No prefix was passed, cannot create clause.")
+		return nil, errors.New("no prefix was passed, cannot create clause")
 	}
 
 	query := elastic.NewPrefixQuery("path", realArgs.Prefix)
@@ -51,7 +51,7 @@ func PathSummary(_ context.Context, args map[string]interface{}) (string, error)
 	}
 
 	if realArgs.Prefix == "" {
-		return "", errors.New("No prefix was passed, cannot create clause.")
+		return "", errors.New("no prefix was passed, cannot create clause")
 	}
 
 	return fmt.Sprintf("path=\"%s\"", realArgs.Prefix), nil

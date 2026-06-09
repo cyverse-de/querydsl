@@ -71,7 +71,7 @@ func StringToFilesize(filesize string) (int64, error) {
 
 	matcher := regexp.MustCompile(`^\s*(\d+(?:\.\d)?)\s*(K|M|G|T)B\s*$`)
 	if !matcher.MatchString(filesize) {
-		return 0, fmt.Errorf("Provided string \"%s\" does not describe a filesize", filesize)
+		return 0, fmt.Errorf("provided string %q does not describe a filesize", filesize)
 	}
 
 	match := matcher.FindStringSubmatch(filesize)
@@ -80,14 +80,14 @@ func StringToFilesize(filesize string) (int64, error) {
 	case "K":
 		return int64(1024 * fsNum), nil
 	case "M":
-		return int64(math.Pow(1024, 2) * fsNum), nil
+		return int64(1024 * 1024 * fsNum), nil
 	case "G":
-		return int64(math.Pow(1024, 3) * fsNum), nil
+		return int64(1024 * 1024 * 1024 * fsNum), nil
 	case "T":
 		return int64(math.Pow(1024, 4) * fsNum), nil
 	}
 
-	return 0, fmt.Errorf("Somehow fell through to the end of the function")
+	return 0, fmt.Errorf("somehow fell through to the end of the function")
 }
 
 // RangeType specifies what sort of range to create for CreateRangeQuery

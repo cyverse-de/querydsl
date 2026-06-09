@@ -39,7 +39,7 @@ func LabelProcessor(_ context.Context, args map[string]interface{}) (elastic.Que
 	}
 
 	if realArgs.Label == "" {
-		return nil, errors.New("No label was passed, cannot create clause.")
+		return nil, errors.New("no label was passed, cannot create clause")
 	}
 
 	var processedQuery string
@@ -60,7 +60,7 @@ func LabelSummary(_ context.Context, args map[string]interface{}) (string, error
 	}
 
 	if realArgs.Label == "" {
-		return "", errors.New("No label was passed, cannot create clause.")
+		return "", errors.New("no label was passed, cannot create clause")
 	}
 
 	if realArgs.Exact {

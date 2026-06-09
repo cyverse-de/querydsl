@@ -64,7 +64,7 @@ func MetadataProcessor(_ context.Context, args map[string]interface{}) (elastic.
 	}
 
 	if realArgs.Attribute == "" && realArgs.Value == "" && realArgs.Unit == "" {
-		return nil, errors.New("Must provide at least one of attribute, value, or unit")
+		return nil, errors.New("must provide at least one of attribute, value, or unit")
 	}
 
 	var includeIrods, includeCyverse bool
@@ -73,12 +73,13 @@ func MetadataProcessor(_ context.Context, args map[string]interface{}) (elastic.
 		includeCyverse = true
 	} else {
 		for _, t := range realArgs.MetadataTypes {
-			if t == "irods" {
+			switch t {
+			case "irods":
 				includeIrods = true
-			} else if t == "cyverse" {
+			case "cyverse":
 				includeCyverse = true
-			} else {
-				return nil, fmt.Errorf("Got a metadata type of %q, but expected irods or cyverse", t)
+			default:
+				return nil, fmt.Errorf("got a metadata type of %q, but expected irods or cyverse", t)
 			}
 		}
 	}
@@ -120,7 +121,7 @@ func MetadataSummary(_ context.Context, args map[string]interface{}) (string, er
 	}
 
 	if realArgs.Attribute == "" && realArgs.Value == "" && realArgs.Unit == "" {
-		return "", errors.New("Must provide at least one of attribute, value, or unit")
+		return "", errors.New("must provide at least one of attribute, value, or unit")
 	}
 
 	var a, v, u string

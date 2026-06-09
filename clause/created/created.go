@@ -39,7 +39,7 @@ func CreatedProcessor(_ context.Context, args map[string]interface{}) (elastic.Q
 	}
 
 	if realArgs.From == "" && realArgs.To == "" {
-		return nil, errors.New("Neither from nor to was passed, cannot create clause.")
+		return nil, errors.New("neither from nor to was passed, cannot create clause")
 	}
 
 	var from, to int64
@@ -76,7 +76,7 @@ func CreatedSummary(_ context.Context, args map[string]interface{}) (string, err
 	}
 
 	if realArgs.From == "" && realArgs.To == "" {
-		return "", errors.New("Neither from nor to was passed, cannot create clause.")
+		return "", errors.New("neither from nor to was passed, cannot create clause")
 	}
 
 	return fmt.Sprintf("created=%s--%s", realArgs.From, realArgs.To), nil

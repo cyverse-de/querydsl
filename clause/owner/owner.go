@@ -36,7 +36,7 @@ func OwnerProcessor(_ context.Context, args map[string]interface{}) (elastic.Que
 	}
 
 	if realArgs.Owner == "" {
-		return nil, errors.New("No owner was passed, cannot create clause.")
+		return nil, errors.New("no owner was passed, cannot create clause")
 	}
 
 	processedOwner := clauseutils.AddImplicitUsernameWildcard(realArgs.Owner)

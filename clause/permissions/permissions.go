@@ -43,15 +43,15 @@ func PermissionsProcessor(_ context.Context, args map[string]interface{}) (elast
 	}
 
 	if len(realArgs.Users) == 0 {
-		return nil, errors.New("No users were passed, cannot create clause.")
+		return nil, errors.New("no users were passed, cannot create clause")
 	}
 
 	if realArgs.Permission == "" {
-		return nil, errors.New("No permission was passed, cannot create clause.")
+		return nil, errors.New("no permission was passed, cannot create clause")
 	}
 
 	if realArgs.Permission != "own" && realArgs.Permission != "write" && realArgs.Permission != "read" {
-		return nil, fmt.Errorf("Got a permission of %q, but expected read, write, or own.", realArgs.Permission)
+		return nil, fmt.Errorf("got a permission of %q, but expected read, write, or own", realArgs.Permission)
 	}
 
 	var innerquery *elastic.BoolQuery

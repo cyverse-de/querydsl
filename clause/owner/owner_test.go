@@ -109,7 +109,7 @@ func TestOwnerProcessor(t *testing.T) {
 				}
 			}
 
-			if !(hasTerm && hasWildcard) {
+			if !hasTerm || !hasWildcard {
 				t.Error("'must' did not have both a term and a wildcard query")
 			}
 		}

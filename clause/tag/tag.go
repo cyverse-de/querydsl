@@ -35,7 +35,7 @@ func TagProcessor(_ context.Context, args map[string]interface{}) (elastic.Query
 	}
 
 	if len(realArgs.Tags) == 0 {
-		return nil, errors.New("No tags were passed, cannot create clause.")
+		return nil, errors.New("no tags were passed, cannot create clause")
 	}
 
 	query := elastic.NewBoolQuery()

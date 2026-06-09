@@ -193,7 +193,7 @@ func TestPermissionsProcessor(t *testing.T) {
 				shouldHaveShould := len(c.expectedWildcards) > 1 || (len(c.expectedWildcards) > 0 && len(c.expectedTerms) > 0)
 
 				// A permission clause only *doesn't* exist if it's set to read + recursive
-				hasPermissionClause := !(c.permission == "read" && c.permissionRecurse)
+				hasPermissionClause := c.permission != "read" || !c.permissionRecurse
 
 				// 'must' can only have two items if
 				// a.) there is no should clause
@@ -221,7 +221,7 @@ func TestPermissionsProcessor(t *testing.T) {
 
 				if !mustShouldBeArray && mustShouldExist {
 					mustQueryArray = []interface{}{
-						mustQuery.(interface{}), // nolint:gosimple
+						mustQuery,
 					}
 				}
 
@@ -273,7 +273,7 @@ func TestPermissionsProcessor(t *testing.T) {
 					}
 				}
 
-				if !(hasPerm && (hasWildcard || hasUserTerms)) {
+				if !hasPerm || (!hasWildcard && !hasUserTerms) {
 					t.Error("query did not have both a term and either a wildcard or a terms query")
 				}
 

@@ -130,7 +130,7 @@ func (c *Clause) Translate(ctx context.Context, qd *QueryDSL) (elastic.Query, er
 	if processor, exists := clauseProcessors[c.Type]; exists {
 		return processor(ctx, c.Args)
 	}
-	return nil, fmt.Errorf("No processor found for type '%s'", c.Type)
+	return nil, fmt.Errorf("no processor found for type '%s'", c.Type)
 }
 
 // launchClauseTranslators launches a set of goroutines to translate a set of Clauses

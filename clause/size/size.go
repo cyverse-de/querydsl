@@ -39,7 +39,7 @@ func SizeProcessor(_ context.Context, args map[string]interface{}) (elastic.Quer
 	}
 
 	if realArgs.From == "" && realArgs.To == "" {
-		return nil, errors.New("Neither from nor to was passed, cannot create clause.")
+		return nil, errors.New("neither from nor to was passed, cannot create clause")
 	}
 
 	var from, to int64
@@ -76,7 +76,7 @@ func SizeSummary(_ context.Context, args map[string]interface{}) (string, error)
 	}
 
 	if realArgs.From == "" && realArgs.To == "" {
-		return "", errors.New("Neither from nor to was passed, cannot create clause.")
+		return "", errors.New("neither from nor to was passed, cannot create clause")
 	}
 
 	return fmt.Sprintf("size=%s--%s", realArgs.From, realArgs.To), nil
