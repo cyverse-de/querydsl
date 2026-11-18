@@ -102,9 +102,9 @@ func individualClause(t *testing.T, c permissionTestCase, clause interface{}) (b
 			t.Error("Wildcard was not for the userPermissions.user field")
 		}
 
-		userWildcard, ok := userPart.(map[string]interface{})["wildcard"]
+		userWildcard, ok := userPart.(map[string]interface{})["value"]
 		if !ok {
-			t.Error("Wildcard for userPermissions.user lacks 'wildcard' child")
+			t.Error("Wildcard for userPermissions.user lacks 'value' child")
 		}
 
 		expectedWildcardSet := makeSSet(c.expectedWildcards)
